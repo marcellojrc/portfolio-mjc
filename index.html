@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MJC — Portfólio de Arquitetura</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,500&family=Archivo+Black&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0c0c0d;
+    --bg-alt: #141414;
+    --cream: #f5f1ea;
+    --cream-dim: rgba(245,241,234,.6);
+    --red: #e8342a;
+    --terra: #d98a4f;
+    --line: rgba(245,241,234,.14);
+    --display: 'Archivo Black', 'Archivo', sans-serif;
+    --body: 'Archivo', sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{background:var(--bg);color:var(--cream);font-family:var(--body);overflow-x:hidden;}
+  img{display:block;width:100%;height:100%;object-fit:cover;background:#1a1a1a;}
+  ::selection{background:var(--red);color:var(--cream);}
+  a{color:inherit;}
+  button{font-family:inherit;}
+
+  /* Skip link — acessibilidade / navegação por teclado */
+  .skip-link{
+    position:absolute;left:16px;top:-60px;z-index:100;
+    background:var(--red);color:#fff;padding:12px 18px;
+    font-size:13px;letter-spacing:.06em;text-transform:uppercase;
+    transition:top .25s ease;
+  }
+  .skip-link:focus{top:16px;}
+
+  .grain{
+    position:fixed;inset:0;z-index:60;pointer-events:none;
+    opacity:.045;mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* ---------- NAV ---------- */
+  header.nav{
+    position:fixed;top:0;left:0;right:0;z-index:50;
+    display:flex;justify-content:space-between;align-items:center;
+    padding:22px clamp(20px,5vw,64px);
+    mix-blend-mode:difference;
+  }
+  .nav .mark{font-family:var(--display);font-size:20px;letter-spacing:.02em;}
+  .nav-right{display:flex;align-items:center;gap:22px;}
+  .nav .tag{font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;opacity:.75;}
+  .cv-btn{
+    font-family:var(--display);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--bg);background:var(--cream);padding:10px 16px;border:1px solid var(--cream);
+    text-decoration:none;transition:all .2s ease;
+  }
+  .cv-btn:hover{background:var(--red);border-color:var(--red);color:#fff;}
+  @media(max-width:560px){.cv-btn{padding:8px 12px;font-size:10px;}.nav .tag{display:none;}}
+  .burger{
+    width:38px;height:38px;display:flex;flex-direction:column;justify-content:center;gap:6px;
+    background:none;border:none;cursor:pointer;padding:0;
+  }
+  .burger span{display:block;width:100%;height:2px;background:var(--cream);transition:transform .3s ease, opacity .3s ease;}
+  .burger.open span:nth-child(1){transform:translateY(8px) rotate(45deg);}
+  .burger.open span:nth-child(2){opacity:0;}
+  .burger.open span:nth-child(3){transform:translateY(-8px) rotate(-45deg);}
+
+  .menu-overlay{
+    position:fixed;inset:0;z-index:45;
+    background:#0c0c0d;
+    display:flex;align-items:center;justify-content:center;
+    opacity:0;pointer-events:none;
+    transition:opacity .4s ease;
+  }
+  .menu-overlay.open{opacity:.98;pointer-events:auto;}
+  .menu-overlay.open .menu-list a,
+  .menu-overlay.open .menu-list .m-sep{
+    animation:menuItemIn .65s cubic-bezier(.2,.7,.2,1) both;
+  }
+  .menu-overlay.open .menu-list a:nth-of-type(1){animation-delay:.08s}
+  .menu-overlay.open .menu-list a:nth-of-type(2){animation-delay:.12s}
+  .menu-overlay.open .menu-list a:nth-of-type(3){animation-delay:.16s}
+  .menu-overlay.open .menu-list a:nth-of-type(4){animation-delay:.20s}
+  .menu-overlay.open .menu-list a:nth-of-type(5){animation-delay:.24s}
+  .menu-overlay.open .menu-list a:nth-of-type(6){animation-delay:.28s}
+  .menu-overlay.open .menu-list a:nth-of-type(7){animation-delay:.32s}
+  .menu-overlay.open .menu-list a:nth-of-type(8){animation-delay:.36s}
+  .menu-overlay.open .menu-list a:nth-of-type(9){animation-delay:.40s}
+  .menu-overlay.open .menu-list a:nth-of-type(10){animation-delay:.44s}
+  .menu-overlay.open .menu-list a:nth-of-type(11){animation-delay:.48s}
+  .menu-overlay.open .menu-list a:nth-of-type(12){animation-delay:.52s}
+  @keyframes menuItemIn{
+    from{opacity:0;transform:translateY(18px);clip-path:inset(100% 0 0 0)}
+    to{opacity:1;transform:translateY(0);clip-path:inset(0 0 0 0)}
+  }
+  .menu-list{display:flex;flex-direction:column;gap:6px;text-align:center;max-height:80vh;overflow-y:auto;padding:40px 20px;}
+  .menu-list a{
+    font-family:var(--display);font-size:clamp(20px,4vw,34px);text-transform:uppercase;
+    color:var(--cream-dim);text-decoration:none;padding:6px 0;transition:color .2s;
+  }
+  .menu-list a:hover{color:var(--red);}
+  .menu-list .m-sep{height:1px;background:var(--line);margin:14px auto;width:80px;}
+
+  /* ---------- HERO ---------- */
+  .hero{
+    position:relative;min-height:100svh;
+    display:flex;flex-direction:column;justify-content:flex-end;
+    padding:0 clamp(20px,5vw,64px) 64px;
+    overflow:hidden;background:#000;
+  }
+  .hero-img{position:absolute;inset:0;z-index:0;animation:kenburns 24s ease-in-out infinite alternate;}
+  @keyframes kenburns{from{transform:scale(1);}to{transform:scale(1.08);}}
+  .hero-img img{opacity:.6;filter:saturate(0.9) contrast(1.05);}
+  .hero::before{
+    content:"";position:absolute;inset:0;z-index:1;
+    background:
+      linear-gradient(180deg, rgba(0,0,0,.65) 0%, rgba(0,0,0,.35) 32%, rgba(12,12,13,.55) 68%, var(--bg) 100%),
+      linear-gradient(90deg, rgba(0,0,0,.55) 0%, transparent 40%);
+  }
+  .hero-top{
+    position:relative;z-index:2;padding-top:140px;
+    display:flex;justify-content:space-between;align-items:flex-start;gap:24px;flex-wrap:wrap;
+  }
+  .hero-top .eyebrow{font-size:12.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--cream-dim);max-width:260px;line-height:1.6;}
+  .hero-title{
+    position:relative;z-index:2;font-family:var(--display);
+    font-size:clamp(56px, 13vw, 190px);line-height:.88;letter-spacing:-.01em;
+    color:var(--cream);text-transform:uppercase;
+  }
+  .hero-title .line2{color:var(--red);}
+  .hero-cta{position:relative;z-index:2;display:flex;gap:14px;margin-top:32px;flex-wrap:wrap;}
+  .btn{
+    font-family:var(--display);font-size:13px;letter-spacing:.08em;text-transform:uppercase;
+    padding:16px 28px;text-decoration:none;display:inline-block;transition:all .25s ease;border:1px solid var(--cream);
+  }
+  .btn-solid{background:var(--red);color:#fff;border-color:var(--red);}
+  .btn-solid:hover{background:transparent;color:var(--red);}
+  .btn-outline{color:var(--cream);}
+  .btn-outline:hover{background:var(--cream);color:var(--bg);}
+  .hero-sub{
+    position:relative;z-index:2;display:flex;justify-content:space-between;align-items:flex-end;
+    margin-top:28px;flex-wrap:wrap;gap:20px;border-top:1px solid var(--line);padding-top:20px;
+  }
+  .hero-sub p{max-width:420px;font-size:15.5px;color:var(--cream-dim);}
+  .scroll-cue{font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;display:flex;align-items:center;gap:10px;color:var(--cream-dim);}
+  .scroll-cue .bar{width:1px;height:34px;background:var(--red);animation:scrollbar 1.8s ease-in-out infinite;}
+  @keyframes scrollbar{0%,100%{transform:scaleY(.3);opacity:.4;}50%{transform:scaleY(1);opacity:1;}}
+
+  /* ---------- MARQUEE ---------- */
+  .marquee{position:relative;z-index:1;background:var(--red);color:var(--bg);overflow:hidden;white-space:nowrap;padding:14px 0;}
+  .marquee-track{display:inline-flex;gap:40px;animation:marquee 26s linear infinite;}
+  .marquee span{font-family:var(--display);font-size:19px;letter-spacing:.01em;display:inline-flex;align-items:center;gap:40px;text-transform:uppercase;}
+  .marquee span::after{content:"◆";font-size:11px;color:var(--bg);opacity:.6;margin-left:40px;}
+  @keyframes marquee{from{transform:translateX(0);}to{transform:translateX(-50%);}}
+
+  section{position:relative;z-index:1;}
+  .wrap{max-width:1280px;margin:0 auto;padding:0 clamp(20px,5vw,64px);}
+
+  .kicker{display:flex;align-items:center;gap:14px;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--red);margin-bottom:26px;}
+  .kicker::before{content:"";width:34px;height:1px;background:var(--red);}
+
+  /* ---------- ABOUT ---------- */
+  .about{padding:140px 0 100px;background:linear-gradient(180deg, var(--bg), var(--bg-alt));}
+  .about-grid{display:grid;grid-template-columns:1fr .62fr;gap:64px;align-items:start;}
+  @media (max-width:860px){.about-grid{grid-template-columns:1fr;}}
+  .about h2{font-family:var(--display);font-size:clamp(32px,4.6vw,52px);line-height:1.05;margin-bottom:22px;text-transform:uppercase;}
+  .about p{color:var(--cream-dim);font-size:16.5px;line-height:1.75;max-width:60ch;margin-bottom:20px;}
+  .portrait{aspect-ratio:3/4;overflow:hidden;border:1px solid var(--line);filter:grayscale(1) contrast(1.05);}
+
+  .facts-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);margin-top:36px;}
+  @media (max-width:760px){.facts-row{grid-template-columns:1fr 1fr;}}
+  .fact{background:var(--bg);padding:18px 20px;}
+  .fact .lbl{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--cream-dim);display:block;margin-bottom:9px;}
+  .fact .val{font-family:var(--display);font-size:15px;text-transform:uppercase;line-height:1.3;}
+
+  .activity{padding:0 0 130px;}
+  .activity-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
+  @media (max-width:760px){.activity-grid{grid-template-columns:1fr 1fr;}}
+  .a-item{background:var(--bg);padding:26px;}
+  .a-item .yr{font-family:var(--display);font-size:15px;color:var(--red);margin-bottom:12px;}
+  .a-item p{font-size:13.5px;line-height:1.6;color:var(--cream-dim);}
+  .activity-photos{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;margin-top:1px;background:var(--line);border-left:1px solid var(--line);border-right:1px solid var(--line);}
+  .activity-photos div{aspect-ratio:4/3;overflow:hidden;}
+  .activity-photos img{filter:grayscale(.3) contrast(1.05);}
+
+  /* ---------- PROJECTS ---------- */
+  .projects-intro{padding:20px 0 60px;}
+  .projects-intro h2{font-family:var(--display);font-size:clamp(34px,5vw,64px);text-transform:uppercase;line-height:1;}
+
+  .project{padding:110px 0;position:relative;border-top:1px solid var(--line);overflow:hidden;}
+  .project .bg-num{
+    position:absolute;right:clamp(-30px,-1vw,30px);top:280px;
+    font-family:var(--display);font-size:clamp(140px,20vw,320px);line-height:1;
+    color:transparent;-webkit-text-stroke:1px rgba(245,241,234,.07);
+    z-index:0;pointer-events:none;user-select:none;
+  }
+  .project-inner{position:relative;z-index:2;}
+  .project-head{max-width:820px;margin-bottom:44px;}
+  .project-head .num{font-family:var(--display);font-size:14px;color:var(--red);letter-spacing:.1em;margin-bottom:14px;}
+  .project-head h3{font-family:var(--display);font-size:clamp(28px,4.4vw,56px);line-height:1.02;margin-bottom:16px;text-transform:uppercase;}
+  .project-head .loc{font-size:13px;color:var(--cream-dim);text-transform:uppercase;letter-spacing:.08em;margin-bottom:22px;}
+  .project-head p{font-size:16px;line-height:1.75;color:var(--cream-dim);max-width:74ch;margin-bottom:22px;}
+  .meta-row{display:flex;flex-wrap:wrap;gap:32px;border-top:1px solid var(--line);padding-top:20px;}
+  .meta-item .lbl{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--cream-dim);display:block;margin-bottom:6px;}
+  .meta-item .val{font-family:var(--display);font-size:17px;}
+  .detail-note{margin-top:24px;padding-top:20px;border-top:1px solid var(--line);}
+  .detail-note h4{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--cream-dim);margin-bottom:10px;}
+  .detail-note p{font-size:14.5px;color:var(--cream-dim);line-height:1.7;max-width:74ch;margin:0;}
+
+  .gallery{column-count:2;column-gap:12px;position:relative;z-index:2;}
+  .gallery.g-wide{column-count:3;}
+  @media (max-width:900px){.gallery.g-wide{column-count:2;}}
+  @media (max-width:560px){.gallery{column-count:1;}}
+  .gallery .im{break-inside:avoid;margin-bottom:12px;overflow:hidden;border:1px solid var(--line);position:relative;cursor:zoom-in;}
+  .gallery .im img{transition:transform .8s cubic-bezier(.2,.7,.2,1);}
+  .gallery .im::after{
+    content:'';position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:50%;
+    background:rgba(12,12,13,.55) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23f5f1ea' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7'/%3E%3C/svg%3E") center/16px no-repeat;
+    opacity:0;transition:opacity .25s ease;pointer-events:none;
+  }
+  .gallery .im:hover::after{opacity:1;}
+
+  /* ---------- LIGHTBOX ---------- */
+  .lightbox{
+    position:fixed;inset:0;z-index:200;background:rgba(8,8,9,.96);
+    display:flex;align-items:center;justify-content:center;
+    opacity:0;visibility:hidden;transition:opacity .3s ease;
+  }
+  .lightbox.open{opacity:1;visibility:visible;}
+  .lightbox-frame{max-width:min(94vw,1400px);max-height:88vh;position:relative;}
+  .lightbox-frame img{
+    max-width:94vw;max-height:88vh;width:auto;height:auto;object-fit:contain;
+    border:1px solid var(--line);
+  }
+  .lightbox-caption{
+    text-align:center;margin-top:14px;font-size:12.5px;letter-spacing:.04em;color:var(--cream-dim);
+  }
+  .lightbox-close, .lightbox-prev, .lightbox-next{
+    position:fixed;background:none;border:1px solid var(--line);color:var(--cream);
+    cursor:pointer;display:flex;align-items:center;justify-content:center;
+    transition:border-color .2s ease, color .2s ease;
+  }
+  .lightbox-close:hover, .lightbox-prev:hover, .lightbox-next:hover{border-color:var(--red);color:var(--red);}
+  .lightbox-close{top:22px;right:clamp(20px,5vw,64px);width:42px;height:42px;font-size:20px;}
+  .lightbox-prev, .lightbox-next{top:50%;transform:translateY(-50%);width:46px;height:46px;font-size:22px;border-radius:50%;}
+  .lightbox-prev{left:clamp(10px,3vw,40px);}
+  .lightbox-next{right:clamp(10px,3vw,40px);}
+  .lightbox-counter{
+    position:fixed;bottom:22px;left:50%;transform:translateX(-50%);
+    font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--cream-dim);
+  }
+  @media(max-width:640px){
+    .lightbox-prev, .lightbox-next{width:38px;height:38px;font-size:18px;}
+    .lightbox-close{width:38px;height:38px;top:14px;}
+  }
+  .gallery .im:hover img{transform:scale(1.05);}
+
+  .reveal{opacity:0;transform:translateY(36px);transition:opacity .9s cubic-bezier(.2,.7,.2,1), transform .9s cubic-bezier(.2,.7,.2,1);}
+  .reveal.in{opacity:1;transform:translateY(0);}
+
+  .project:nth-of-type(odd)::after,.project:nth-of-type(even)::after{content:"";position:absolute;inset:0;z-index:0;opacity:.5;}
+  .p-a::after{background:radial-gradient(65% 45% at 90% 0%, rgba(232,52,42,.09), transparent 70%);}
+  .p-b::after{background:radial-gradient(65% 45% at 4% 8%, rgba(217,138,79,.09), transparent 70%);}
+
+  /* ---------- TOOLS / SKILLS / EDUCATION ---------- */
+  .tools{padding:120px 0 110px;border-top:1px solid var(--line);}
+  .tools-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);margin-top:10px;}
+  @media (max-width:760px){.tools-grid{grid-template-columns:1fr 1fr;}}
+  @media (max-width:480px){.tools-grid{grid-template-columns:1fr;}}
+  .tool-item{background:var(--bg);padding:28px;}
+  .tool-item h4{font-family:var(--display);font-size:17px;text-transform:uppercase;margin-bottom:9px;}
+  .tool-item span{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--red);}
+  .tool-item p{font-size:13px;color:var(--cream-dim);margin-top:9px;line-height:1.55;}
+
+  .skills{padding:0 0 120px;}
+  .skills-list{border-top:1px solid var(--line);margin-top:10px;}
+  .skill-row{display:grid;grid-template-columns:280px 1fr;gap:30px;padding:26px 0;border-bottom:1px solid var(--line);}
+  @media (max-width:760px){.skill-row{grid-template-columns:1fr;gap:8px;}}
+  .skill-row h4{font-family:var(--display);font-size:18px;text-transform:uppercase;}
+  .skill-row p{font-size:14.5px;color:var(--cream-dim);line-height:1.7;max-width:70ch;}
+
+  .education{padding:0 0 130px;}
+  .education-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);margin-top:10px;}
+  @media (max-width:640px){.education-grid{grid-template-columns:1fr;}}
+  .edu-card{background:var(--bg);padding:28px;}
+  .edu-card .yr{font-family:var(--display);font-size:12.5px;color:var(--red);letter-spacing:.09em;margin-bottom:10px;display:block;}
+  .edu-card h4{font-family:var(--display);font-size:18px;margin-bottom:8px;text-transform:uppercase;}
+  .edu-card p{font-size:13.5px;color:var(--cream-dim);line-height:1.6;}
+
+  /* ---------- CONTACT ---------- */
+  .contact{padding:150px 0 0;position:relative;background:#050505;overflow:hidden;}
+  .contact-img{position:absolute;inset:0;z-index:0;}
+  .contact-img img{opacity:.28;filter:grayscale(.4);}
+  .contact::before{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(180deg, rgba(5,5,5,.75), #050505 75%);}
+  .contact .wrap{position:relative;z-index:2;padding-bottom:60px;}
+  .contact h2{font-family:var(--display);font-size:clamp(42px,8vw,120px);line-height:.94;margin-bottom:20px;text-transform:uppercase;}
+  .contact h2 span{color:var(--red);}
+  .contact-cta{margin:24px 0 40px;}
+  .contact-grid{display:flex;justify-content:space-between;flex-wrap:wrap;gap:40px;border-top:1px solid var(--line);padding-top:36px;margin-top:16px;}
+  .contact-col .lbl{font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--cream-dim);margin-bottom:12px;}
+  .contact-col a,.contact-col span{display:block;font-size:15.5px;color:var(--cream);text-decoration:none;margin-bottom:6px;}
+  .contact-col a:hover{color:var(--red);}
+  footer{position:relative;z-index:2;padding:28px clamp(20px,5vw,64px) 36px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--cream-dim);border-top:1px solid var(--line);}
+
+  /* ---------- IMMERSIVE MOTION LAYER ---------- */
+  .page-loader{position:fixed;inset:0;z-index:999;background:#09090a;display:flex;align-items:flex-end;justify-content:space-between;padding:24px clamp(20px,5vw,64px);color:var(--cream);pointer-events:none;}
+  .page-loader .loader-brand{font-family:var(--display);font-size:clamp(40px,8vw,110px);line-height:.8;letter-spacing:-.04em;}
+  .page-loader .loader-meta{font-size:11px;letter-spacing:.16em;text-transform:uppercase;opacity:.7;display:flex;align-items:center;gap:12px;}
+  .page-loader .loader-line{position:absolute;left:clamp(20px,5vw,64px);right:clamp(20px,5vw,64px);bottom:68px;height:2px;background:rgba(245,241,234,.16);overflow:hidden;}
+  .page-loader .loader-line span{display:block;width:100%;height:100%;background:var(--red);transform-origin:left center;transform:scaleX(0);}
+  .hero{min-height:120svh;}
+  .hero-stage{position:absolute;inset:0;overflow:hidden;z-index:0;}
+  .hero-img{will-change:transform;}
+  .hero-content{position:relative;z-index:2;min-height:100svh;display:flex;flex-direction:column;justify-content:flex-end;}
+  .hero-title .char{display:inline-block;will-change:transform,opacity;}
+  .hero-scroll-panel{position:absolute;inset:auto 0 0;height:42vh;z-index:2;pointer-events:none;background:linear-gradient(180deg,transparent 0%,rgba(12,12,13,.2) 35%,var(--bg) 100%);}
+  .scroll-progress{position:fixed;top:0;left:0;width:100%;height:2px;background:transparent;z-index:80;pointer-events:none;}
+  .scroll-progress span{display:block;width:100%;height:100%;background:var(--red);transform:scaleX(0);transform-origin:left center;}
+  .hero-pin-track{height:145vh;position:relative;}
+  .hero-pin-track > .hero{position:sticky;top:0;height:100svh;min-height:0;}
+  .projects-intro{overflow:hidden;}
+  .projects-intro h2{will-change:transform,opacity;}
+  .project{will-change:background-color;}
+  .project .bg-num{will-change:transform;}
+  .project-head h3{overflow:hidden;}
+  .project-head h3 .split-line{display:block;will-change:transform,opacity;}
+  .gallery .im{will-change:transform,opacity;}
+  .gallery .im img{will-change:transform;}
+  .motion-image{overflow:hidden;}
+  .motion-image img{will-change:transform;transform:scale(1.08);}
+  .menu-preview{position:fixed;right:6vw;bottom:6vh;width:min(32vw,420px);aspect-ratio:4/3;overflow:hidden;border:1px solid var(--line);opacity:0;pointer-events:none;transform:translateY(20px);z-index:51;background:var(--bg-alt);}
+  .menu-preview img{position:absolute;inset:0;opacity:0;transform:scale(1.08);transition:opacity .45s ease,transform .7s cubic-bezier(.2,.7,.2,1);}
+  .menu-preview img.active{opacity:1;transform:scale(1);}
+  .menu-preview-label{position:absolute;left:12px;bottom:10px;z-index:2;font-size:10px;letter-spacing:.14em;text-transform:uppercase;background:rgba(12,12,13,.72);padding:7px 9px;}
+  /* ---------- SUNSET CONDO ---------- */
+  .project.p-sunset .sunset-intro-image{
+    position:relative;
+    aspect-ratio:16/9;
+    overflow:hidden;
+    border:1px solid var(--line);
+    margin-bottom:12px;
+    cursor:zoom-in;
+  }
+  .project.p-sunset .sunset-intro-image img{
+    transform:scale(1.06);
+    transition:transform 1s cubic-bezier(.2,.7,.2,1), opacity .5s ease;
+  }
+  .project.p-sunset .sunset-intro-image:hover img{transform:scale(1.02);}
+  .project.p-sunset .sunset-intro-image::after{
+    content:'';
+    position:absolute;inset:0;
+    background:linear-gradient(180deg,transparent 55%,rgba(12,12,13,.42));
+    pointer-events:none;
+  }
+  .project.p-sunset .sunset-label{
+    position:absolute;left:16px;bottom:14px;z-index:2;
+    font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--cream);background:rgba(12,12,13,.58);
+    padding:7px 9px;border:1px solid rgba(245,241,234,.16);
+  }
+  @media(max-width:560px){
+    .project.p-sunset .sunset-intro-image{aspect-ratio:4/3;}
+  }
+  .section-transition{position:absolute;left:0;right:0;bottom:0;height:16vh;pointer-events:none;background:linear-gradient(180deg,transparent,var(--bg));}
+  @media(max-width:760px){.menu-preview{display:none;}.hero-pin-track{height:125vh;}.hero-scroll-panel{height:34vh;}}
+  @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto;}.page-loader{display:none!important;}.hero{min-height:100svh!important;}.hero-pin-track{height:auto;}.hero-pin-track>.hero{position:relative;top:auto;height:auto;min-height:100svh;}.hero-img{animation:none!important;}.marquee-track{animation:none!important;}.scroll-progress{display:none;}}
+
+</style>
+</head>
+<body>
+
+<a href="#main" class="skip-link">Saltar para o conteúdo principal</a>
+<div class="grain"></div>
+
+<header class="nav">
+  <span class="mark">MJC</span>
+  <div class="nav-right">
+    <span class="tag">Portfólio · 2026</span>
+    <a class="cv-btn" href="https://drive.google.com/file/d/1PLqDbRhrFCbv4OgxCZhGxB1yKRgxhRoX/view?usp=sharing" target="_blank" rel="noopener">Baixar CV</a>
+    <button class="burger" id="burgerBtn" aria-label="Abrir menu" aria-expanded="false" aria-controls="menuOverlay">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</header>
+
+<nav class="menu-overlay" id="menuOverlay" aria-hidden="true">
+  <div class="menu-list">
+    <a href="#about">Sobre</a>
+    <a href="#projects">Projetos</a>
+    <div class="m-sep"></div>
+    <a href="#p01" data-preview="images/proj01_01.jpg">01 — Casa Q28C25</a>
+    <a href="#p02" data-preview="images/proj02_01.jpg">02 — Oficina de Artes</a>
+    <a href="#p03" data-preview="images/proj03_01.jpg">03 — Design de Interior</a>
+    <a href="#p04" data-preview="images/proj04_01.jpg">04 — Residência e Bar</a>
+    <a href="#p05" data-preview="images/proj05_01.jpg">05 — Edifício Changule</a>
+    <a href="#p06" data-preview="images/proj06_01.jpg">06 — Reconfiguração de Fachada</a>
+    <a href="#p07" data-preview="images/proj07_01.jpg">07 — Habitacional T3</a>
+    <a href="#p08" data-preview="images/proj08_01.jpg">08 — Projeto Sueia</a>
+    <a href="#p09" data-preview="images/proj09_01.jpg">09 — Remodelação e Ampliação</a>
+    <a href="#p10" data-preview="images/proj10_01.jpg">10 — Polana Caniço A</a>
+    <a href="#p11" data-preview="images/proj11_01.jpg">11 — Centro Infantil Ziranguane</a>
+    <a href="#p12" data-preview="images/sunset_01.jpg">12 — Sunset Condo Madendé</a>
+    <div class="m-sep"></div>
+    <a href="#tools">Ferramentas</a>
+    <a href="#education">Formação</a>
+    <a href="#contact">Contacto</a>
+    <a href="https://drive.google.com/file/d/1PLqDbRhrFCbv4OgxCZhGxB1yKRgxhRoX/view?usp=sharing" target="_blank" rel="noopener" style="color:var(--red);">Baixar CV</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero-pin-track" id="heroTrack">
+<section class="hero">
+  <div class="hero-stage"><div class="hero-img"><img src="images/hero_bg.jpg" alt="Residência e bar, Bela Vista Village" fetchpriority="high"></div></div>
+  <div class="hero-content">
+    <div class="hero-top">
+      <span class="eyebrow">Arquitetura, planeamento físico e geotecnologias — do território ao detalhe construtivo.</span>
+    </div>
+    <h1 class="hero-title">MJC<br><span class="line2">PORTFÓLIO</span></h1>
+    <div class="hero-cta">
+      <a href="#projects" class="btn btn-solid">Ver Projetos</a>
+      <a href="#contact" class="btn btn-outline">Contactar</a>
+    </div>
+    <div class="hero-sub">
+      <p>Marcelo Júnior Cumbe. Estudante finalista de Arquitetura e Planeamento Físico, Universidade Eduardo Mondlane — Maputo, Moçambique.</p>
+      <div class="scroll-cue"><span class="bar"></span>Descer</div>
+    </div>
+  </div>
+  <div class="hero-scroll-panel"></div>
+</section>
+</div>
+
+<div class="marquee">
+  <div class="marquee-track">
+    <span>Revit · BIM · Modelagem Paramétrica · Dynamo · Lumion · QGIS · OpenStreetMap · YouthMappers · Planeamento Urbano · Revit · BIM · Modelagem Paramétrica · Dynamo · Lumion · QGIS · OpenStreetMap · YouthMappers · Planeamento Urbano ·</span>
+  </div>
+</div>
+
+<div class="menu-preview" id="menuPreview" aria-hidden="true"><div class="menu-preview-label" id="menuPreviewLabel">Projecto</div></div>
+
+<main id="main">
+
+<!-- ABOUT -->
+<section class="about" id="about">
+  <div class="wrap">
+    <div class="kicker">Sobre</div>
+    <div class="about-grid reveal">
+      <div>
+        <h2>Técnica, criatividade<br>e impacto social.</h2>
+        <p>Marcelo Júnior Cumbe, 25 anos (2026), é estudante finalista de Arquitetura e Planeamento Físico na Universidade Eduardo Mondlane. Desde a infância é apaixonado por obras e construção, o que o levou a escolher a arquitetura como forma de unir técnica, criatividade e impacto social.</p>
+        <p>Durante a formação tem-se dedicado ao estudo de soluções sustentáveis e inovadoras, com foco em modelagem digital, arquitetura paramétrica e programação visual (Dynamo) aplicada ao projeto, partilhando também conhecimento como instrutor de cursos de Revit. Atuou ainda como coordenador da comunidade YouthMappers Moçambique, onde reforçou a sua visão sobre o urbanismo e o impacto de projetos humanitários em áreas desfavorecidas de infraestruturas.</p>
+        <div class="facts-row">
+          <div class="fact"><span class="lbl">Formação</span><span class="val">UEM — Arquitetura e Planeamento Físico</span></div>
+          <div class="fact"><span class="lbl">Conclusão prevista</span><span class="val">Fevereiro 2027</span></div>
+          <div class="fact"><span class="lbl">Base</span><span class="val">Catembe, Maputo</span></div>
+          <div class="fact"><span class="lbl">Áreas</span><span class="val">Arquitetura · Urbanismo · BIM · GIS</span></div>
+        </div>
+      </div>
+      <div class="portrait"><img src="images/about_portrait.jpg" alt="Marcelo Júnior Cumbe" loading="lazy" decoding="async"></div>
+    </div>
+  </div>
+</section>
+
+<section class="activity">
+  <div class="wrap">
+    <div class="kicker">Atividade profissional</div>
+    <div class="activity-grid reveal">
+      <div class="a-item"><span class="yr">Abr — Ago 2026</span><p>Estágio de arquitetura na LDM Arquitectos, Lda.: desenvolvimento de projetos, produção de documentação técnica, representação de soluções arquitetónicas e acompanhamento de diferentes etapas do processo em equipa.</p></div>
+      <div class="a-item"><span class="yr">2025</span><p>Docência de Revit (BIM) para profissionais da CFM–Beira, com foco em modelagem e documentação de projeto.</p></div>
+      <div class="a-item"><span class="yr">2024 —</span><p>Coordenação de mapeamento digital na comunidade YouthMappers Moçambique: mapathons, gestão de equipas e colaboração internacional em projetos humanitários, incluindo a campanha Africa 30 Days.</p></div>
+      <div class="a-item"><span class="yr">2023 —</span><p>Participação em iniciativas de mapeamento colaborativo com o OpenStreetMap em bases de dados geoespaciais humanitárias.</p></div>
+    </div>
+    <div class="activity-photos reveal">
+      <div><img src="images/activity_1.jpg" alt="Docência de Revit 2025" loading="lazy" decoding="async"></div>
+      <div><img src="images/activity_2.jpg" alt="GIZ School 2024" loading="lazy" decoding="async"></div>
+      <div><img src="images/activity_3.jpg" alt="Mapeamento colaborativo 2025" loading="lazy" decoding="async"></div>
+    </div>
+  </div>
+</section>
+
+<section class="projects-intro" id="projects">
+  <div class="wrap reveal">
+    <div class="kicker">Projetos</div>
+    <h2>12 projetos —<br>habitação, equipamentos<br>e desenho urbano.</h2>
+  </div>
+</section>
+
+<!-- PROJECT 01 -->
+<section class="project p-a" id="p01">
+  <div class="bg-num">01</div>
+  <div class="wrap project-inner">
+    <div class="project-head reveal">
+      <div class="num">Projeto 01 / 12</div>
+      <h3>Casa Q28C25</h3>
+      <div class="loc">Chamanculo "C", Cidade de Maputo</div>
+      <p>Projeto habitacional multifamiliar desenvolvido em contexto urbano consolidado, concebido a partir da Escola de Inverno FAPF/UEM. A proposta organiza os espaços domésticos em torno de áreas comuns bem ventiladas, respondendo às condições de densidade e proximidade típicas do bairro.</p>
+      <div class="meta-row">
+        <div class="meta-item"><span class="lbl">Programa</span><span class="val">Habitacional Multifamiliar</span></div>
+        <div class="meta-item"><span class="lbl">Área</span><span class="val">449 m²</span></div>
+      </div>
+    </div>
+    <div class="gallery reveal motion-gallery">
+      <div class="im"><img src="images/proj01_01.jpg" alt="Casa Q28C25 — render 1" loading="lazy" decoding="async"></div>
+      <div class="im"><img src="images/proj01_02.jpg" alt="Casa Q28C25 — render 2" loading="lazy" decoding="async"></div>
+    </div>
+  </div>
+</section>
+
+<!-- PROJECT 02 -->
+<section class="project p-b" id="p02">
+  <div class="bg-num">02</div>
+  <div class="wrap project-inner">
+    <div class="project-head reveal">
+      <div class="num">Projeto 02 / 12</div>
+      <h3>Oficina de Artes</h3>
+      <div class="loc">Maputo</div>
+      <p>Oficina elevada por pilotis de aço, pensada para um ambiente propício à criação e apreciação artística. Betão, madeira e vidro combinam-se para conferir modernidade e leveza ao espaço, integrando-o harmoniosamente ao lote urbano envolvente e à malha construída vizinha.</p>
+      <div class="meta-row">
+        <div class="meta-item"><span class="lbl">Programa</span><span class="val">Escritório / Oficina</span></div>
+        <div class="meta-item"><span class="lbl">Área</span><span class="val">847 m²</span></div>
+      </div>
+    </div>
+    <div class="gallery reveal motion-gallery">
+      <div class="im"><img src="images/proj02_01.jpg" alt="Oficina de Artes — vista aérea" loading="lazy" decoding="async"></div>
+      <div class="im"><img src="images/proj02_02.jpg" alt="Oficina de Artes — render 2" loading="lazy" decoding="async"></div>
+      <div class="im"><img src="images/proj02_03.jpg" alt="Oficina de Artes — render 3" loading="lazy" decoding="async"></div>
+    </div>
+  </div>
+</section>
+
+<!-- PROJECT 03 -->
+<section class="project p-a" id="p03">
+  <div class="bg-num">03</div>
+  <div class="wrap project-inner">
+    <div class="project-head reveal">
+      <div class="num">Projeto 03 / 12</div>
+      <h3>Design de Interior</h3>
+      <div class="loc">Caso hipotético</div>
+      <p>Exercício de design de interiores para um programa habitacional hipotético, explorando paletas de materiais, iluminação e mobiliário como ferramentas de composição espacial — complemento à prática de projeto arquitetónico ao nível do detalhe interior.</p>
+      <div class="meta-row">
+        <div class="meta-item"><span class="lbl">Programa</span><span class="val">Habitacional</span></div>
+        <div class="meta-item"><span class="lbl">Natureza</span><span class="val">Exercício de interiores</span></div>
+      </div>
+    </div>
+    <div class="gallery reveal motion-gallery">
+      <div class="im"><img src="images/proj03_01.jpg" alt="Design de interior 1" loading="lazy" decoding="async"></div>
+      <div class="im"><img src="images/proj03_02.jpg" alt="Design de interior 2" loading="lazy" decoding="async"></div>
+      <div class="im"><img src="images/proj03_03.jpg" alt="Design de interior 3" loading="lazy" decoding="async"></div>
+      <div class="im"><img src="images/proj03_04.jpg" alt="Design de interior 4" loading="lazy" decoding="async"></div>
+    </div>
+  </div>
+</section>
+
+<!-- PROJECT 04 -->
+<section class="project p-b" id="p04">
+  <div class="bg-num">04</div>
+  <div class="wrap project-inner">
+    <div class="project-head reveal">
+      <div class="num">Projeto 04 / 12</div>
+      <h3>Residência e Bar</h3>
+      <div class="loc">Bela Vista Village, Maputo</div>
+      <p>Dois volumes independentes que interagem sem perder autonomia funcional. A residência prioriza a convivência, com sala comum integrada e grandes vãos para luz natural e ventilação cruzada. O bloco comercial (bar), em dois pisos, destaca-se pelo terraço superior de 142 m², pensado para lazer ao ar livre. A área de lazer soma piscina de 49,4 m², deck de madeira de 85,5 m² e 447,7 m² de área verde de transição entre os blocos.</p>
+      <div class="meta-row">
+        <div class="meta-item"><span class="lbl">Programa</span><span class="val">Residencial + Bar</span></div>
+        <div class="meta-item"><span class="lbl">Piscina</span><span class="val">49,4 m²</span></div>
+        <div class="meta-item"><span class="lbl">Terraço</span><span class="val">142 m²</span></div>
+      </div>
+    </div>
+    <div class="gallery g-wide reveal motion-gallery">
+      <div class="im"><img src="images/proj04_02.jpg" alt="Residência e Bar — vista aérea" loading="lazy" decoding="async"></div>
+      <div class="im"><img src="images/proj04_03.jpg" alt="Residência e Bar — imagem 1" loading="lazy" decoding="async"></div>
+      <div class="im"><img src="images/proj04_04.jpg" alt="Residência e Bar — imagem 2" loading="lazy" decoding="async"></div>
+      <div class="im"><img src="images/proj04_05.jpg" alt="Residência e Bar — imagem 3" loading="lazy" decoding="async"></div>
+      <div class="im"><img src="images/proj04_06.jpg" alt="Residência e Bar — planta térreo" loading="lazy" decoding="async"></div>
+      <div class="im"><img src="images/proj04_07.jpg" alt="Residência e Bar — sistemas construtivos" loading="lazy" decoding="async"></div>
+      <div class="im"><img src="images/proj04_08.jpg" alt="Residência e Bar — planta primeiro piso" loading="lazy" decoding="async"></div>
+    </div>
+  </div>
+</section>
+
+<!-- PROJECT 05 -->
+<section class="project p-a" id="p05">
+  <div class="bg-num">05</div>
+  <div class="wrap project-inner">
+    <div class="project-head reveal">
+      <div class="num">Projeto 05 / 12</div>
+      <h3>Edifício Changule</h3>
+      <div class="loc">Katembe, Maputo</div>
+      <p>Resposta técnica às condições ambientais de Katembe: soleira elevada a 0,7 m como precaução contra cheias. No rés-do-chão, um desenho open-space integra sala, jantar e cozinha; três quartos a nascente garantem privacidade e conforto térmico matinal, com área de lazer e piscina. No piso superior, o núcleo de circulação vertical distribui luz da tarde pela suíte, escritório e áreas de lazer privadas.</p>
+      <div class="meta-row">
+        <div class="meta-item"><span class="lbl">Programa</span><span class="val">Habitacional — 2 pisos</span></div>
+        <div class="meta-item"><span class="lbl">Elevação</span><span class="val">0,7 m</span></div>
+      </div>
+    </div>
+    <div class="gallery reveal motion-gallery">
+      <div class="im"><img src="images/proj05_01.jpg" alt="Edifício Changule — render 1" loading="lazy" decoding="async"></div>
+      <div class="im"><img src="images/proj05_02.jpg" alt="Edifício Changule — render 2" loading="lazy" decoding="async"></div>
+      <div class="im"><img src="images/proj05_03.jpg" alt="Edifício Changule — render 3" loading="lazy" decoding="async"></div>
+      <div class="im"><img src="images/proj05_04.jpg" alt="Edifício Changule — planta térreo" loading="lazy" decoding="async"></div>
+      <div class="im"><img src="images/proj05_05.jpg" alt="Edifício Changule — planta primeiro piso" loading="lazy" decoding="async"></div>
+    </div>
+  </div>
+</section>
+
+<!-- PROJECT 06 -->
+<section class="project p-b" id="p06">
+  <div class="bg-num">06</div>
+  <div class="wrap project-inner">
+    <div class="project-head reveal">
+      <div class="num">Projeto 06 / 12</div>
+      <h3>Reconfiguração de Fachada</h3>
+      <div class="loc">Chiboene, Maputo</div>
+      <p>Intervenção técnica e estética numa estrutura existente, transformando um volume convencional num desenho contemporâneo. Elementos de sombreamento e o jogo dinâmico de cheios e vazios reforçam a composição original; superfícies envidraçadas ampliam a transparência e a ligação com o exterior, protegidas por platibandas que melhoram a eficiência térmica sob o sol de Maputo.</p>
+      <div class="meta-row">
+        <div class="meta-item"><span class="lbl">Programa</span><span class="val">Fachada</span></div>
+        <div class="meta-item"><span class="lbl">Natureza</span><span class="val">Reabilitação</span></div>
+      </div>
+    </div>
+    <div class="gallery g-wide reveal motion-gallery">
+      <div class="im"><img src="images/proj06_01.jpg" alt="Fachada — imagem 1" loading="lazy" decoding="async"></div>
+      <div class="im"><img src="images/proj06_02.jpg" alt="Fachada — imagem 2" loading="lazy" decoding="async"></div>
+      <div class="im"><img src="images/proj06_03.jpg" alt="Fachada — imagem 3" loading="lazy" decoding="async"></div>
+      <div class="im"><img src="images/proj06_04.jpg" alt="Fachada — estudo de materiais" loading="lazy" decoding="async"></div>
+      <div class="im"><img src="images/proj06_05.jpg" alt="Fachada — render final" loading="lazy" decoding="async"></div>
+      <div class="im"><img src="images/proj06_06.jpg" alt="Fachada — vista 2" loading="lazy" decoding="async"></div>
+      <div class="im"><img src="images/proj06_07.jpg" alt="Fachada — vista 3" loading="lazy" decoding="async"></div>
+    </div>
+  </div>
+</section>
+
+<!-- PROJECT 07 -->
+<section class="project p-a" id="p07">
+  <div class="bg-num">07</div>
+  <div class="wrap project-inner">
+    <div class="project-head reveal">
+      <div class="num">Projeto 07 / 12</div>
+      <h3>Projeto Habitacional T3</h3>
+      <div class="loc">Machipanda, Manica</div>
+      <p>Moradia unifamiliar T3 projetada para oferecer conforto térmico e integração com o entorno rural de Machipanda. A residência contempla três quartos (sendo uma suíte), áreas sociais amplas e cozinha integrada. O design privilegia iluminação e ventilação natural, garantindo funcionalidade e qualidade construtiva com recursos locais.</p>
+      <div class="meta-row">
+        <div class="meta-item"><span class="lbl">Programa</span><span class="val">Habitacional T3</span></div>
+        <div class="meta-item"><span class="lbl">Área</span><span class="val">210 m²</span></div>
+      </div>
+    </div>
+    <div class="gallery reveal motion-gallery">
+      <div class="im"><img src="images/proj07_01.jpg" alt="T3 — render 1" loading="lazy" decoding="async"></div>
+      <div class="im"><img src="images/proj07_02.jpg" alt="T3 — render 2" loading="lazy" decoding="async"></div>
+      <div class="im"><img src="images/proj07_03.jpg" alt="T3 — planta" loading="lazy" decoding="async"></div>
+      <div class="im"><img src="images/proj07_04.jpg" alt="T3 — corte" loading="lazy" decoding="async"></div>
+      <div class="im"><img src="images/proj07_05.jpg" alt="T3 — fotografia de obra 1" loading="lazy" decoding="async"></div>
+      <div class="im"><img src="images/proj07_06.jpg" alt="T3 — fotografia de obra 2" loading="lazy" decoding="async"></div>
+    </div>
+  </div>
+</section>
+
+<!-- PROJECT 08 -->
+<section class="project p-b" id="p08">
+  <div class="bg-num">08</div>
+  <div class="wrap project-inner">
+    <div class="project-head reveal">
+      <div class="num">Projeto 08 / 12</div>
+      <h3>Projeto Sueia</h3>
+      <div class="loc">Boquico, Matola</div>
+      <p>Residência unifamiliar em Boquico, Matola, articulada em torno de um espaço de lazer com piscina e zona gourmet coberta. A composição volumétrica combina brise-soleil em madeira, varandas balançadas e grandes envidraçados, com plantas técnicas detalhadas do piso térreo e do primeiro piso.</p>
+      <div class="meta-row">
+        <div class="meta-item"><span class="lbl">Programa</span><span class="val">Habitacional</span></div>
+        <div class="meta-item"><span class="lbl">Destaque</span><span class="val">Piscina + gourmet</span></div>
+      </div>
+      <div class="detail-note">
+        <h4>Desenvolvimento técnico</h4>
+        <p>Encomenda residencial para o Sr. José Sueia, no bairro de Mualhaze. O dossier técnico articula necessidades funcionais e estéticas do cliente com plantas, fundações, pilares, cotas e elevações — o percurso completo da ideia até à documentação de projeto.</p>
+      </div>
+    </div>
+    <div class="gallery reveal motion-gallery">
+      <div class="im"><img src="images/proj08_01.jpg" alt="Sueia — render 1" loading="lazy" decoding="async"></div>
+      <div class="im"><img src="images/proj08_02.jpg" alt="Sueia — render 2" loading="lazy" decoding="async"></div>
+      <div class="im"><img src="images/proj08_03.jpg" alt="Sueia — planta" loading="lazy" decoding="async"></div>
+      <div class="im"><img src="images/proj08_04.jpg" alt="Sueia — fotografia" loading="lazy" decoding="async"></div>
+    </div>
+  </div>
+</section>
+
+<!-- PROJECT 09 -->
+<section class="project p-a" id="p09">
+  <div class="bg-num">09</div>
+  <div class="wrap project-inner">
+    <div class="project-head reveal">
+      <div class="num">Projeto 09 / 12</div>
+      <h3>Remodelação e Ampliação</h3>
+      <div class="loc">Matendene, Maputo</div>
+      <p>Reabilitação e ampliação vertical de um edifício residencial existente. A intervenção principal cria, no primeiro andar, um apartamento T2 totalmente independente do piso térreo — um desafio de compatibilização entre a estrutura existente e a nova carga, exigindo um plano detalhado de reforço estrutural para garantir estabilidade e segurança.</p>
+      <div class="meta-row">
+        <div class="meta-item"><span class="lbl">Programa</span><span class="val">Habitacional T2</span></div>
+        <div class="meta-item"><span class="lbl">Natureza</span><span class="val">Ampliação vertical</span></div>
+      </div>
+    </div>
+    <div class="gallery g-wide reveal motion-gallery">
+      <div class="im"><img src="images/proj09_01.jpg" alt="Matendene — render 1" loading="lazy" decoding="async"></div>
+      <div class="im"><img src="images/proj09_02.jpg" alt="Matendene — render 2" loading="lazy" decoding="async"></div>
+      <div class="im"><img src="images/proj09_03.jpg" alt="Matendene — fotografia 1" loading="lazy" decoding="async"></div>
+      <div class="im"><img src="images/proj09_04.jpg" alt="Matendene — fotografia 2" loading="lazy" decoding="async"></div>
+      <div class="im"><img src="images/proj09_05.jpg" alt="Matendene — planta" loading="lazy" decoding="async"></div>
+      <div class="im"><img src="images/proj09_06.jpg" alt="Matendene — corte" loading="lazy" decoding="async"></div>
+    </div>
+  </div>
+</section>
+
+<!-- PROJECT 10 -->
+<section class="project p-b" id="p10">
+  <div class="bg-num">10</div>
+  <div class="wrap project-inner">
+    <div class="project-head reveal">
+      <div class="num">Projeto 10 / 12</div>
+      <h3>Requalificação Urbana — Polana Caniço A</h3>
+      <div class="loc">Polana Caniço, Maputo</div>
+      <p>Revitalização de um tecido urbano informal e carente de infraestrutura, apoiada em mapeamento de campo e sensoriamento remoto. A proposta organiza-se a partir de uma nova hierarquia viária centrada na Avenida Vladimir Lenine — eixo estruturante com frente ativa e mobilidade suave (ciclovias e passeios amplos). A habitação distribui-se em quatro blocos: moradias geminadas (A e B), edifícios T2 de média densidade (C) e blocos mistos com comércio no piso térreo (D).</p>
+      <div class="meta-row">
+        <div class="meta-item"><span class="lbl">Programa</span><span class="val">Urbano + Habitação T1–T3</span></div>
+        <div class="meta-item"><span class="lbl">Área</span><span class="val">≈ 10,4 ha</span></div>
+      </div>
+      <div class="detail-note">
+        <h4>Desenvolvimento técnico</h4>
+        <p>Blocos A e B: moradias geminadas de dois pisos. Bloco C: edifícios de três pisos e maior densidade. Bloco D: uso misto com quatro pisos, habitação T3 e serviços no rés-do-chão.</p>
+      </div>
+    </div>
+    <div class="gallery g-wide reveal motion-gallery">
+      <div class="im"><img src="images/proj04_01.jpg" alt="Polana Caniço A — vista aérea do complexo desportivo e habitacional" loading="lazy" decoding="async"></div>
+      <div class="im"><img src="images/proj10_01.jpg" alt="Polana Caniço A — masterplan" loading="lazy" decoding="async"></div>
+      <div class="im"><img src="images/proj10_02.jpg" alt="Polana Caniço A — mapeamento de campo" loading="lazy" decoding="async"></div>
+      <div class="im"><img src="images/proj10_03.jpg" alt="Polana Caniço A — mapeamento remoto" loading="lazy" decoding="async"></div>
+      <div class="im"><img src="images/proj10_04.jpg" alt="Polana Caniço A — desenho urbano" loading="lazy" decoding="async"></div>
+      <div class="im"><img src="images/proj10_05.jpg" alt="Polana Caniço A — hierarquia viária 1" loading="lazy" decoding="async"></div>
+      <div class="im"><img src="images/proj10_06.jpg" alt="Polana Caniço A — hierarquia viária 2" loading="lazy" decoding="async"></div>
+      <div class="im"><img src="images/proj10_07.jpg" alt="Polana Caniço A — secção viária" loading="lazy" decoding="async"></div>
+      <div class="im"><img src="images/proj10_08.jpg" alt="Polana Caniço A — vista aérea da proposta" loading="lazy" decoding="async"></div>
+    </div>
+  </div>
+</section>
+
+<!-- PROJECT 11 -->
+<section class="project p-a" id="p11">
+  <div class="bg-num">11</div>
+  <div class="wrap project-inner">
+    <div class="project-head reveal">
+      <div class="num">Projeto 11 / 12</div>
+      <h3>Centro Infantil AEA Ziranguane</h3>
+      <div class="loc">Distrito de Mecanhelas, Niassa</div>
+      <p>Como arquiteto responsável, o foco está no desenvolvimento e quantificação do Bloco Escolar-Modelo — um protótipo pensado para servir de guia técnico e prático, permitindo que a própria comunidade de Ziranguane participe na construção. O projeto encontra-se em fase BIM, com quantificação de materiais e orçamentação para compor o dossiê de financiamento, assegurando um edifício robusto, sustentável e de fácil manutenção.</p>
+      <div class="meta-row">
+        <div class="meta-item"><span class="lbl">Programa</span><span class="val">Equipamento comunitário</span></div>
+        <div class="meta-item"><span class="lbl">Fase</span><span class="val">BIM · Orçamentação</span></div>
+      </div>
+      <div class="detail-note">
+        <h4>Desenvolvimento técnico</h4>
+        <p>Quantificação e orçamento detalhados; modelo construtivo pensado para ser robusto, sustentável e de fácil manutenção, compondo o dossiê de financiamento do projeto.</p>
+      </div>
+    </div>
+    <div class="gallery reveal motion-gallery">
+      <div class="im"><img src="images/proj11_01.jpg" alt="Ziranguane — modelo BIM 1" loading="lazy" decoding="async"></div>
+      <div class="im"><img src="images/proj11_02.jpg" alt="Ziranguane — modelo BIM 2" loading="lazy" decoding="async"></div>
+      <div class="im"><img src="images/proj11_03.jpg" alt="Ziranguane — modelo BIM 3" loading="lazy" decoding="async"></div>
+      <div class="im"><img src="images/proj11_04.jpg" alt="Ziranguane — quantificação" loading="lazy" decoding="async"></div>
+      <div class="im"><img src="images/proj11_05.jpg" alt="Ziranguane — detalhe construtivo" loading="lazy" decoding="async"></div>
+    </div>
+  </div>
+</section>
+
+<!-- PROJECT 12 -->
+<section class="project p-sunset" id="p12">
+  <div class="bg-num">12</div>
+  <div class="wrap project-inner">
+    <div class="project-head reveal">
+      <div class="num">Projeto 12 / 12</div>
+      <h3>Sunset Condo Madendé</h3>
+      <div class="loc">Madendé · acesso próximo da IN-1</div>
+      <p>Locada a apenas 300 quilômetros de Maputo e 90 quilômetros de Shaishai, no centro de Madendé, a apenas 600 metros do centro de vila e do mercado local, perto da estrada IN-1, uma localidade estratégica com fácil acesso a serviços e amenities.</p>
+      <p>Introduzindo Sunset Condo Madendé, um desenvolvimento planejado exclusivo, com 11 plotes ideais para desenvolver projetos confortáveis, personalizados e fabricados, arrumados em uma rua central com uma forma U.</p>
+      <p>Um ambiente tranquilo envultado pela natureza, 25 quilômetros da praia de Chiringuele, 12 quilômetros da praia de Nhambavale e 14 quilômetros da praia de Dingoni.</p>
+      <div class="meta-row">
+        <div class="meta-item"><span class="lbl">Plantas espaciais</span><span class="val">50x40 e 50x50</span></div>
+        <div class="meta-item"><span class="lbl">Lotes</span><span class="val">11 plotes</span></div>
+        <div class="meta-item"><span class="lbl">Preços</span><span class="val">350 a 450 mil medicas</span></div>
+      </div>
+      <div class="detail-note">
+        <h4>Oportunidade</h4>
+        <p>Uma oportunidade única para construir sua viagem, investir em qualidade de vida e aproveitar um ambiente exclusivo. Chame agora! <a href="tel:823088000">823088000</a> · <a href="tel:843088000">843088000</a> · <a href="tel:873088000">873088000</a></p>
+      </div>
+    </div>
+
+    <div class="sunset-intro-image reveal motion-image">
+      <img src="images/sunset_01.jpg" alt="Sunset Condo Madendé — imagem 1" loading="lazy" decoding="async">
+      <span class="sunset-label">Sunset Condo Madendé</span>
+    </div>
+
+    <div class="gallery g-wide reveal motion-gallery">
+      <div class="im"><img src="images/sunset_01.jpg" alt="Sunset Condo Madendé — imagem 1" loading="lazy" decoding="async"></div>
+      <div class="im"><img src="images/sunset_02.jpg" alt="Sunset Condo Madendé — imagem 2" loading="lazy" decoding="async"></div>
+      <div class="im"><img src="images/sunset_03.jpg" alt="Sunset Condo Madendé — imagem 3" loading="lazy" decoding="async"></div>
+      <div class="im"><img src="images/sunset_04.jpg" alt="Sunset Condo Madendé — imagem 4" loading="lazy" decoding="async"></div>
+      <div class="im"><img src="images/sunset_05.jpg" alt="Sunset Condo Madendé — imagem 5" loading="lazy" decoding="async"></div>
+    </div>
+  </div>
+</section>
+
+<!-- TOOLS -->
+<section class="tools" id="tools">
+  <div class="wrap">
+    <div class="kicker">Ferramentas</div>
+    <h2 class="projects-intro-h" style="font-family:var(--display);font-size:clamp(28px,4vw,44px);text-transform:uppercase;line-height:1.05;max-width:640px;">Uma caixa de ferramentas entre espaço e dados.</h2>
+    <div class="tools-grid reveal">
+      <div class="tool-item"><h4>Revit</h4><span>Nível avançado</span></div>
+      <div class="tool-item"><h4>AutoCAD</h4><span>Nível avançado</span></div>
+      <div class="tool-item"><h4>Lumion</h4><span>Nível avançado</span></div>
+      <div class="tool-item"><h4>SketchUp</h4><span>Nível avançado</span></div>
+      <div class="tool-item"><h4>ArchiCAD</h4><span>Nível intermédio</span></div>
+      <div class="tool-item"><h4>3ds Max</h4><span>Nível intermédio</span></div>
+      <div class="tool-item"><h4>Corona Renderer</h4><span>Nível intermédio</span></div>
+      <div class="tool-item"><h4>QGIS</h4><span>Nível intermédio</span></div>
+      <div class="tool-item"><h4>GIS & Mapeamento</h4><span>Ferramentas</span><p>OpenStreetMap · Mapillary · OSMtracker · StreetComplete · JOSM · KoBoToolbox</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- SKILLS -->
+<section class="skills">
+  <div class="wrap">
+    <div class="kicker">Competências</div>
+    <div class="skills-list reveal">
+      <div class="skill-row"><h4>Liderança de equipa</h4><p>Experiência na coordenação de grupos em campanhas internacionais e gestão de pessoas e fluxos de trabalho para alcançar objetivos coletivos.</p></div>
+      <div class="skill-row"><h4>Pensamento estratégico</h4><p>Visão analítica focada no planeamento territorial e na organização de dados para soluções urbanas sustentáveis e eficientes.</p></div>
+      <div class="skill-row"><h4>Colaboração interpessoal</h4><p>Facilidade para trabalhar em contextos multidisciplinares, comunicando ideias de forma clara e profissional.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- EDUCATION -->
+<section class="education" id="education">
+  <div class="wrap">
+    <div class="kicker">Percurso educacional</div>
+    <div class="education-grid reveal">
+      <div class="edu-card"><span class="yr">2022 — PRESENTE</span><h4>Universidade Eduardo Mondlane</h4><p>Arquitetura e Planeamento Físico — estudante finalista, conclusão prevista em fevereiro de 2027.</p></div>
+      <div class="edu-card"><span class="yr">2023 — 2024</span><h4>Treinamento em Revit (BIM)</h4><p>Curso focado em modelagem de projetos arquitetónicos e documentação técnica.</p></div>
+      <div class="edu-card"><span class="yr">2023</span><h4>Formação em Sistemas de Informação Geográfica</h4><p>Formação prática em mapeamento digital usando QGIS e OpenStreetMap.</p></div>
+      <div class="edu-card"><span class="yr">2015 — 2019</span><h4>Escola Secundária do Noroeste 1</h4><p>Ensino médio — 12.º ano.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section class="contact" id="contact">
+  <div class="contact-img"><img src="images/contact_bg.jpg" alt="" loading="lazy" decoding="async"></div>
+  <div class="wrap">
+    <div class="kicker">Contacto</div>
+    <h2 class="reveal">Vamos construir<br><span>o próximo projeto.</span></h2>
+    <div class="contact-cta reveal">
+      <a href="mailto:marcelojuniord07@gmail.com" class="btn btn-solid">Enviar Email</a>
+      <a href="https://wa.link/qdv2hj" target="_blank" rel="noopener" class="btn btn-outline">WhatsApp</a>
+      <a href="https://drive.google.com/file/d/1PLqDbRhrFCbv4OgxCZhGxB1yKRgxhRoX/view?usp=sharing" target="_blank" rel="noopener" class="btn btn-outline">Baixar CV</a>
+    </div>
+    <div class="contact-grid reveal">
+      <div class="contact-col">
+        <div class="lbl">Email</div>
+        <a href="mailto:marcelojuniord07@gmail.com">marcelojuniord07@gmail.com</a>
+      </div>
+      <div class="contact-col">
+        <div class="lbl">WhatsApp</div>
+        <a href="https://wa.link/qdv2hj" target="_blank" rel="noopener">+258 84 713 0805</a>
+      </div>
+      <div class="contact-col">
+        <div class="lbl">Redes</div>
+        <a href="https://www.linkedin.com/in/marcellojrc/" target="_blank" rel="noopener">LinkedIn — marcellojrc</a>
+        <a href="https://www.instagram.com/marcellojrc/" target="_blank" rel="noopener">Instagram — marcellojrc</a>
+      </div>
+      <div class="contact-col">
+        <div class="lbl">Localização</div>
+        <span>Catembe, Rua da Igreja — Maputo, Moçambique</span>
+      </div>
+    </div>
+  </div>
+  <footer>
+    <span>© 2026 Marcelo Júnior Cumbe</span>
+    <span>Arquitetura & Planeamento Físico — UEM</span>
+  </footer>
+</section>
+
+</main>
+
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Imagem em tela cheia">
+  <button class="lightbox-close" id="lightboxClose" aria-label="Fechar">✕</button>
+  <button class="lightbox-prev" id="lightboxPrev" aria-label="Imagem anterior">‹</button>
+  <div class="lightbox-frame">
+    <img id="lightboxImg" src="" alt="">
+    <p class="lightbox-caption" id="lightboxCaption"></p>
+  </div>
+  <button class="lightbox-next" id="lightboxNext" aria-label="Imagem seguinte">›</button>
+  <span class="lightbox-counter" id="lightboxCounter"></span>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js"></script>
+<script>
+  // Motion system inspired by cinematic portfolio/game-site scroll choreography
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const loader = document.getElementById('pageLoader');
+  const loaderBar = document.getElementById('loaderBar');
+  const loaderCount = document.getElementById('loaderCount');
+  const progressBar = document.getElementById('scrollProgressBar');
+
+  function splitText(el){
+    const text = el.textContent.trim();
+    el.setAttribute('aria-label', text);
+    el.innerHTML = text.split(/(\s+)/).map(part => /\s+/.test(part) ? part : `<span class="split-line">${part}</span>`).join(' ');
+  }
+
+  if(!reduceMotion && window.gsap){
+    gsap.registerPlugin(ScrollTrigger);
+
+    // Pre-loader: count-up + wipe transition
+    let loaderProgress = {v:0};
+    gsap.to(loaderProgress,{v:100,duration:1.35,ease:'power2.out',onUpdate:()=>{
+      loaderBar.style.transform=`scaleX(${loaderProgress.v/100})`;
+      loaderCount.textContent=String(Math.round(loaderProgress.v)).padStart(2,'0');
+    },onComplete:()=>{
+      const tl=gsap.timeline({onComplete:()=>loader.remove()});
+      tl.to(loader,{clipPath:'inset(0 0 100% 0)',duration:.85,ease:'power4.inOut'})
+        .to('.hero-img',{scale:1.12,duration:0},0)
+        .from('.hero-top',{y:45,opacity:0,duration:.8,ease:'power3.out'},.25)
+        .from('.hero-title',{y:90,opacity:0,duration:1,ease:'power4.out'},.35)
+        .from('.hero-cta,.hero-sub',{y:25,opacity:0,stagger:.08,duration:.55,ease:'power3.out'},.7)
+        .to('.hero-img',{scale:1,duration:1.8,ease:'power3.out'},.2);
+    }});
+
+    // Hero: pinned cinematic zoom + title fade on scroll
+    gsap.to('.hero-img',{scale:1.26,ease:'none',scrollTrigger:{trigger:'#heroTrack',start:'top top',end:'bottom bottom',scrub:1.2}});
+    gsap.to('.hero-top',{y:-80,opacity:0,ease:'none',scrollTrigger:{trigger:'#heroTrack',start:'top top',end:'55% top',scrub:1}});
+    gsap.to('.hero-title',{scale:.72,y:-120,opacity:.35,ease:'none',scrollTrigger:{trigger:'#heroTrack',start:'10% top',end:'65% top',scrub:1}});
+    gsap.to('.hero-sub',{y:-40,opacity:0,ease:'none',scrollTrigger:{trigger:'#heroTrack',start:'20% top',end:'60% top',scrub:1}});
+    gsap.to('.hero-scroll-panel',{opacity:1,ease:'none',scrollTrigger:{trigger:'#heroTrack',start:'10% top',end:'100% bottom',scrub:1}});
+
+    // Global progress
+    ScrollTrigger.create({start:0,end:'max',onUpdate:self=>{progressBar.style.transform=`scaleX(${self.progress})`;}});
+
+    // Intro choreography
+    gsap.from('.projects-intro .kicker',{x:-30,opacity:0,duration:.8,ease:'power3.out',scrollTrigger:{trigger:'.projects-intro',start:'top 80%'}});
+    gsap.from('.projects-intro h2',{y:80,opacity:0,duration:1.1,ease:'power4.out',scrollTrigger:{trigger:'.projects-intro',start:'top 76%'}});
+
+    // Project numbers drift, headings enter word-by-word
+    document.querySelectorAll('.project').forEach(project=>{
+      const num=project.querySelector('.bg-num');
+      if(num) gsap.to(num,{y:-120,ease:'none',scrollTrigger:{trigger:project,start:'top bottom',end:'bottom top',scrub:1.5}});
+      const title=project.querySelector('h3');
+      if(title){
+        splitText(title);
+        gsap.from(title.querySelectorAll('.split-line'),{y:55,opacity:0,stagger:.06,duration:.7,ease:'power3.out',scrollTrigger:{trigger:project,start:'top 74%'}});
+      }
+      const introImage=project.querySelector('.motion-image');
+      if(introImage){
+        gsap.fromTo(introImage,{clipPath:'inset(12% 0 12% 0)',opacity:.65},{clipPath:'inset(0% 0 0% 0)',opacity:1,duration:1.1,ease:'power3.out',scrollTrigger:{trigger:introImage,start:'top 84%'}});
+        const introImg=introImage.querySelector('img');
+        if(introImg){
+          gsap.to(introImg,{yPercent:-6,scale:1.01,ease:'none',scrollTrigger:{trigger:introImage,start:'top bottom',end:'bottom top',scrub:1}});
+        }
+      }
+      const gallery=project.querySelector('.motion-gallery');
+      if(gallery){
+        const items=gallery.querySelectorAll('.im');
+        gsap.from(items,{y:50,opacity:0,scale:.985,stagger:.08,duration:.85,ease:'power3.out',scrollTrigger:{trigger:gallery,start:'top 82%'}});
+        gallery.querySelectorAll('img').forEach(img=>{
+          gsap.to(img,{yPercent:-8,scale:1.05,ease:'none',scrollTrigger:{trigger:img.closest('.im'),start:'top bottom',end:'bottom top',scrub:1}});
+        });
+      }
+      gsap.to(project,{backgroundColor:project.classList.contains('p-a')?'#101011':'#0c0c0d',ease:'none',scrollTrigger:{trigger:project,start:'top 85%',end:'top 35%',scrub:true}});
+    });
+
+    // About / tools / skills / education / contact entrances
+    gsap.utils.toArray('.reveal').forEach((el,i)=>{
+      gsap.fromTo(el,{y:34,opacity:0},{y:0,opacity:1,duration:.85,ease:'power3.out',scrollTrigger:{trigger:el,start:'top 88%',once:true}});
+    });
+
+    // Image scale reveal for large atmospheric images
+    gsap.utils.toArray('.portrait,.activity-photos div,.contact-img').forEach(el=>{
+      const img=el.querySelector('img'); if(!img) return;
+      gsap.fromTo(img,{scale:1.14},{scale:1,duration:1.4,ease:'power3.out',scrollTrigger:{trigger:el,start:'top 85%'}});
+    });
+
+    ScrollTrigger.refresh();
+  } else {
+    loader?.remove();
+    progressBar.style.transform='scaleX(1)';
+  }
+
+  // Scroll reveal
+
+  const revealEls = document.querySelectorAll('.reveal');
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+    });
+  }, { threshold: 0.12 });
+  revealEls.forEach(el => io.observe(el));
+
+  // Hamburger menu
+  const burger = document.getElementById('burgerBtn');
+  const overlay = document.getElementById('menuOverlay');
+  function closeMenu(){
+    burger.classList.remove('open');
+    overlay.classList.remove('open');
+    burger.setAttribute('aria-expanded','false');
+    overlay.setAttribute('aria-hidden','true');
+  }
+  burger.addEventListener('click', () => {
+    const isOpen = burger.classList.toggle('open');
+    overlay.classList.toggle('open');
+    burger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    overlay.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
+  });
+  overlay.querySelectorAll('a').forEach(a => a.addEventListener('click', closeMenu));
+
+
+  // Menu image preview: the active project image follows the hovered item
+  const menuPreview = document.getElementById('menuPreview');
+  const menuPreviewLabel = document.getElementById('menuPreviewLabel');
+  if(menuPreview){
+    const projectLinks = overlay.querySelectorAll('a[data-preview]');
+    projectLinks.forEach(link=>{
+      const src=link.dataset.preview;
+      if(!src) return;
+      const img=document.createElement('img');
+      img.src=src; img.alt='';
+      menuPreview.appendChild(img);
+      link.addEventListener('mouseenter',()=>{
+        menuPreview.style.opacity='1';
+        menuPreview.style.transform='translateY(0)';
+        menuPreviewLabel.textContent=link.textContent.trim();
+        menuPreview.querySelectorAll('img').forEach(i=>i.classList.remove('active'));
+        img.classList.add('active');
+      });
+    });
+    overlay.addEventListener('mouseleave',()=>{menuPreview.style.opacity='0';menuPreview.style.transform='translateY(20px)';});
+  }
+
+  // Lightbox — clicar numa imagem da galeria para ver em tela cheia
+  const lightbox = document.getElementById('lightbox');
+  const lightboxImg = document.getElementById('lightboxImg');
+  const lightboxCaption = document.getElementById('lightboxCaption');
+  const lightboxCounter = document.getElementById('lightboxCounter');
+  const lightboxClose = document.getElementById('lightboxClose');
+  const lightboxPrev = document.getElementById('lightboxPrev');
+  const lightboxNext = document.getElementById('lightboxNext');
+
+  let currentGallery = [];
+  let currentIndex = 0;
+
+  function showImage(i){
+    if(!currentGallery.length) return;
+    currentIndex = (i + currentGallery.length) % currentGallery.length;
+    const img = currentGallery[currentIndex];
+    lightboxImg.src = img.src;
+    lightboxImg.alt = img.alt;
+    lightboxCaption.textContent = img.alt || '';
+    lightboxCounter.textContent = (currentIndex + 1) + ' / ' + currentGallery.length;
+  }
+
+  function openLightbox(clickedImg){
+    const gallery = clickedImg.closest('.gallery');
+    currentGallery = gallery ? Array.from(gallery.querySelectorAll('img')) : [clickedImg];
+    showImage(currentGallery.indexOf(clickedImg));
+    lightbox.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeLightbox(){
+    lightbox.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  document.querySelectorAll('.gallery .im img').forEach(img => {
+    img.addEventListener('click', () => openLightbox(img));
+  });
+
+  lightboxClose.addEventListener('click', closeLightbox);
+  lightboxPrev.addEventListener('click', () => showImage(currentIndex - 1));
+  lightboxNext.addEventListener('click', () => showImage(currentIndex + 1));
+
+  lightbox.addEventListener('click', (e) => {
+    if(e.target === lightbox) closeLightbox();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if(!lightbox.classList.contains('open')) return;
+    if(e.key === 'Escape') closeLightbox();
+    if(e.key === 'ArrowLeft') showImage(currentIndex - 1);
+    if(e.key === 'ArrowRight') showImage(currentIndex + 1);
+  });
+</script>
+
+</body>
+</html>
