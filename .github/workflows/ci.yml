@@ -10,6 +10,11 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
+    env:
+      DATABASE_URL: 'file:./dev.db'
+      AUTH_SECRET: 'ci-temporary-secret-key-for-build'
+      NEXT_PUBLIC_SITE_URL: 'https://portfolio-mjc.vercel.app'
+
     steps:
       - name: Checkout Código
         uses: actions/checkout@v4
@@ -26,15 +31,14 @@ jobs:
       - name: Gerar Prisma Client
         run: npx prisma generate
 
-      - name: Verificação de Tipos (Typecheck)
+      - name: Preparar Base de Dados CI
+        run: npx prisma db push
+
+      - name: Verificação de Tipos
         run: npm run typecheck
 
-      - name: Testes Unitários (Vitest)
+      - name: Testes Unitários
         run: npm test
 
-      - name: Compilação de Produção (Build)
+      - name: Compilação de Produção
         run: npm run build
-        env:
-          DATABASE_URL: 'file:./dev.db'
-          AUTH_SECRET: 'ci-temporary-secret-key-for-build'
-          NEXT_PUBLIC_SITE_URL: 'https://portfolio-mjc.vercel.app'
