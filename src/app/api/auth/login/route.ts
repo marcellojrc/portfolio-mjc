@@ -2,8 +2,26 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { verifyPassword, createSession } from '@/lib/auth';
 import { loginSchema } from '@/schemas';
+import { rateLimit, getClientIp } from '@/lib/rate-limit';
 
 export async function POST(request: Request) {
+  const ip = getClientIp(request);
+  const limiter = rateLimit(`login:${ip}`, 5, 60 * 1000); // 5 tentativas por minuto
+
+  if (!limiter.success) {
+    return NextResponse.json(
+      {
+        error: 'Demasiadas tentativas de autenticação. Por favor, aguarde um minuto antes de tentar novamente.',
+      },
+      {
+        status: 429,
+        headers: {
+          'Retry-After': Math.ceil((limiter.reset - Date.now()) / 1000).toString(),
+        },
+      }
+    );
+  }
+
   try {
     const body = await request.json();
 
