@@ -20,11 +20,12 @@ yarn-error.log*
 .env*.local
 *.pem
 
-# Local Databases
+# Local Databases & Backups
 prisma/dev.db
 prisma/dev.db-journal
 *.db
 *.db-journal
+prisma/backups/
 
 # TypeScript
 *.tsbuildinfo
