@@ -7,7 +7,7 @@ import { ArrowUpRight, ArrowDown, Compass, Layers, MapPin, Building2 } from 'luc
 export const revalidate = 60; // Revalidação a cada minuto
 
 export default async function HomePage() {
-  const [featuredProjects, allProjectsCount, experiences] = await Promise.all([
+  const [featuredProjects, allProjectsCount, experiences, rawSettings] = await Promise.all([
     prisma.project.findMany({
       where: { published: true, featured: true },
       orderBy: { order: 'asc' },
@@ -18,7 +18,10 @@ export default async function HomePage() {
       orderBy: { order: 'asc' },
       take: 4,
     }),
+    prisma.siteSettings.findMany(),
   ]);
+
+  const settings = Object.fromEntries(rawSettings.map((s) => [s.key, s.value]));
 
   return (
     <div className="space-y-24 sm:space-y-36 pb-24">
@@ -41,11 +44,11 @@ export default async function HomePage() {
           {/* Eyebrow / Tagline */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#f5f1ea]/15 pb-6">
             <span className="text-xs uppercase tracking-[0.2em] text-[#f5f1ea]/70 font-medium">
-              Marcelo Júnior Cumbe — Portfólio 2026
+              {settings.author_name || 'Marcelo Júnior Cumbe'} — Portfólio {new Date().getFullYear()}
             </span>
             <div className="flex items-center gap-2 text-xs uppercase tracking-[0.16em] text-[#e8342a]">
               <MapPin className="w-3.5 h-3.5" />
-              <span>Maputo · Moçambique</span>
+              <span>{settings.author_location?.split('—')[1]?.trim() || 'Maputo · Moçambique'}</span>
             </div>
           </div>
 
@@ -89,24 +92,40 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 2. STATS & INDICADORES ESSENCIAIS */}
+      {/* 2. STATS & INDICADORES ESSENCIAIS (CONFIGURÁVEIS PELO CMS) */}
       <section className="arch-container">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 border-y border-[#f5f1ea]/15 py-12">
           <div className="space-y-1">
-            <span className="font-display text-3xl sm:text-5xl text-[#e8342a]">12</span>
-            <p className="text-xs uppercase tracking-widest text-[#f5f1ea]/60">Projetos no Catálogo</p>
+            <span className="font-display text-3xl sm:text-5xl text-[#e8342a]">
+              {settings.hero_stat_1_val || String(allProjectsCount)}
+            </span>
+            <p className="text-xs uppercase tracking-widest text-[#f5f1ea]/60">
+              {settings.hero_stat_1_lbl || 'Projetos no Catálogo'}
+            </p>
           </div>
           <div className="space-y-1">
-            <span className="font-display text-3xl sm:text-5xl text-[#f5f1ea]">UEM</span>
-            <p className="text-xs uppercase tracking-widest text-[#f5f1ea]/60">Arquitetura & Planeamento</p>
+            <span className="font-display text-3xl sm:text-5xl text-[#f5f1ea]">
+              {settings.hero_stat_2_val || 'BIM'}
+            </span>
+            <p className="text-xs uppercase tracking-widest text-[#f5f1ea]/60">
+              {settings.hero_stat_2_lbl || 'Revit Avançado & Dynamo'}
+            </p>
           </div>
           <div className="space-y-1">
-            <span className="font-display text-3xl sm:text-5xl text-[#f5f1ea]">BIM</span>
-            <p className="text-xs uppercase tracking-widest text-[#f5f1ea]/60">Revit Avançado & Dynamo</p>
+            <span className="font-display text-3xl sm:text-5xl text-[#e8342a]">
+              {settings.hero_stat_3_val || 'GIS'}
+            </span>
+            <p className="text-xs uppercase tracking-widest text-[#f5f1ea]/60">
+              {settings.hero_stat_3_lbl || 'Mapeamento Humanitário'}
+            </p>
           </div>
           <div className="space-y-1">
-            <span className="font-display text-3xl sm:text-5xl text-[#e8342a]">GIS</span>
-            <p className="text-xs uppercase tracking-widest text-[#f5f1ea]/60">Mapeamento Humanitário</p>
+            <span className="font-display text-3xl sm:text-5xl text-[#f5f1ea]">
+              {settings.hero_stat_4_val || '3D'}
+            </span>
+            <p className="text-xs uppercase tracking-widest text-[#f5f1ea]/60">
+              {settings.hero_stat_4_lbl || 'Modelação & Execução'}
+            </p>
           </div>
         </div>
       </section>

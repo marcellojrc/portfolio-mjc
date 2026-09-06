@@ -12,6 +12,17 @@ export const contactSchema = z.object({
   message: z.string().min(10, 'A mensagem deve ter pelo menos 10 caracteres.'),
 });
 
+export const projectMediaSchema = z.object({
+  id: z.string().optional(),
+  url: z.string().min(1, 'O caminho/URL da imagem é obrigatório.'),
+  type: z
+    .enum(['IMAGE', 'PLAN', 'SECTION', 'ELEVATION', 'RENDER', 'PHOTO'])
+    .default('IMAGE'),
+  alt: z.string().default(''),
+  caption: z.string().optional().nullable(),
+  order: z.number().int().default(0),
+});
+
 export const projectSchema = z.object({
   title: z.string().min(2, 'O título é obrigatório.'),
   slug: z.string().min(2, 'O slug é obrigatório.'),
@@ -21,17 +32,63 @@ export const projectSchema = z.object({
   year: z.string().min(4, 'O ano é obrigatório.'),
   status: z.string().default('Concluído'),
   description: z.string().min(10, 'A descrição deve ser detalhada.'),
-  area: z.string().optional(),
-  role: z.string().optional(),
-  software: z.string().optional(),
-  services: z.string().optional(),
-  concept: z.string().optional(),
-  technicalDetails: z.string().optional(),
+  area: z.string().optional().nullable(),
+  role: z.string().optional().nullable(),
+  software: z.string().optional().nullable(),
+  services: z.string().optional().nullable(),
+  concept: z.string().optional().nullable(),
+  technicalDetails: z.string().optional().nullable(),
   coverImage: z.string().min(1, 'A imagem de capa é obrigatória.'),
   featured: z.boolean().default(false),
   published: z.boolean().default(true),
+  media: z.array(projectMediaSchema).optional(),
+});
+
+export const experienceSchema = z.object({
+  id: z.string().optional(),
+  period: z.string().min(1, 'O período é obrigatório (ex: 2024 — Presente).'),
+  role: z.string().min(2, 'O cargo/função é obrigatório.'),
+  organization: z.string().min(2, 'A organização/empresa é obrigatória.'),
+  description: z.string().min(5, 'A descrição é obrigatória.'),
+  order: z.number().int().default(0),
+});
+
+export const educationSchema = z.object({
+  id: z.string().optional(),
+  period: z.string().min(1, 'O período é obrigatório (ex: 2022 — Presente).'),
+  degree: z.string().min(2, 'O curso/grau é obrigatório.'),
+  institution: z.string().min(2, 'A instituição é obrigatória.'),
+  description: z.string().min(5, 'A descrição detalhada é obrigatória.'),
+  order: z.number().int().default(0),
+});
+
+export const skillSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().min(1, 'O nome da competência é obrigatório.'),
+  level: z.string().min(1, 'O nível é obrigatório (ex: Avançado, Intermédio).'),
+  category: z.string().min(1, 'A categoria é obrigatória (ex: BIM & GIS).'),
+  order: z.number().int().default(0),
+});
+
+export const siteSettingsSchema = z.record(z.string(), z.string());
+
+export const aboutProfileSchema = z.object({
+  name: z.string().min(2, 'O nome é obrigatório.'),
+  title: z.string().min(2, 'O título profissional é obrigatório.'),
+  bioParagraph1: z.string().min(10, 'O primeiro parágrafo da biografia é obrigatório.'),
+  bioParagraph2: z.string().optional().default(''),
+  bioParagraph3: z.string().optional().default(''),
+  portraitUrl: z.string().min(1, 'A fotografia de perfil é obrigatória.'),
+  workBase: z.string().min(2, 'A base de trabalho é obrigatória.'),
+  focus: z.string().min(2, 'O foco profissional é obrigatório.'),
+  cvUrl: z.string().optional().default(''),
 });
 
 export type LoginInput = z.infer<typeof loginSchema>;
 export type ContactInput = z.infer<typeof contactSchema>;
+export type ProjectMediaInput = z.infer<typeof projectMediaSchema>;
 export type ProjectInput = z.infer<typeof projectSchema>;
+export type ExperienceInput = z.infer<typeof experienceSchema>;
+export type EducationInput = z.infer<typeof educationSchema>;
+export type SkillInput = z.infer<typeof skillSchema>;
+export type AboutProfileInput = z.infer<typeof aboutProfileSchema>;

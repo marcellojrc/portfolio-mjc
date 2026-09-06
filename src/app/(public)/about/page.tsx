@@ -7,16 +7,39 @@ import { ArrowUpRight, GraduationCap, MapPin, Wrench, Globe } from 'lucide-react
 export const metadata: Metadata = {
   title: 'Sobre Marcelo Cumbe',
   description:
-    'Perfil profissional, formação académica na Universidade Eduardo Mondlane, filosofia arquitetónica e ferramentas de Marcelo Júnior Cumbe.',
+    'Perfil profissional, formação académica, filosofia arquitetónica e ferramentas de Marcelo Júnior Cumbe.',
 };
 
 export const revalidate = 60;
 
 export default async function AboutPage() {
-  const [skills, educations] = await Promise.all([
+  const [skills, educations, rawSettings] = await Promise.all([
     prisma.skill.findMany({ orderBy: { order: 'asc' } }),
     prisma.education.findMany({ orderBy: { order: 'asc' } }),
+    prisma.siteSettings.findMany(),
   ]);
+
+  const settings = Object.fromEntries(rawSettings.map((s) => [s.key, s.value]));
+
+  const authorName = settings.author_name || 'MARCELO JÚNIOR CUMBE';
+  const presentationTitle =
+    settings.about_presentation_title || 'Arquiteto & Planeador Físico em formação contínua.';
+  const bioP1 =
+    settings.about_bio_p1 ||
+    'Estudante finalista de Arquitetura e Planeamento Físico na Universidade Eduardo Mondlane (UEM), com conclusão prevista para fevereiro de 2027. Desde a infância fascinado pelos processos de construção civil e pela dinâmica do território, encontrei na arquitetura o canal ideal para articular rigor técnico, criatividade espacial e responsabilidade social.';
+  const bioP2 =
+    settings.about_bio_p2 ||
+    'Durante a minha trajetória académica e profissional, especializei-me na modelagem de informação da construção (BIM com Autodesk Revit e Dynamo) e na aplicação de Sistemas de Informação Geográfica (SIG com QGIS e OpenStreetMap), conectando o desenho do edifício às necessidades de infraestrutura e gestão urbana das cidades moçambicanas.';
+  const bioP3 =
+    settings.about_bio_p3 ||
+    'Atuei como coordenador da comunidade YouthMappers Moçambique, liderando equipas em campanhas internacionais de dados abertos para mitigação de riscos de desastres e planeamento participativo em assentamentos informais.';
+
+  const portrait = settings.about_portrait || '/images/about_portrait.jpg';
+  const workBase = settings.about_work_base || 'Catembe, Maputo';
+  const focus = settings.about_focus || 'BIM · GIS · Arquitetura Sustentável';
+  const cvUrl =
+    settings.author_cv_url ||
+    'https://drive.google.com/file/d/1PLqDbRhrFCbv4OgxCZhGxB1yKRgxhRoX/view?usp=sharing';
 
   return (
     <div className="arch-container py-12 sm:py-20 space-y-20 sm:space-y-32">
@@ -27,30 +50,16 @@ export default async function AboutPage() {
             Perfil & Filosofia
           </span>
           <h1 className="font-display text-4xl sm:text-6xl text-[#f5f1ea] leading-[0.95]">
-            MARCELO JÚNIOR CUMBE
+            {authorName.toUpperCase()}
           </h1>
           <p className="text-xl sm:text-2xl text-[#f5f1ea]/90 font-display">
-            Arquiteto & Planeador Físico em formação contínua.
+            {presentationTitle}
           </p>
 
           <div className="space-y-4 text-base sm:text-lg text-[#f5f1ea]/75 leading-relaxed font-normal">
-            <p>
-              Estudante finalista de Arquitetura e Planeamento Físico na Universidade Eduardo Mondlane
-              (UEM), com conclusão prevista para fevereiro de 2027. Desde a infância fascinado pelos
-              processos de construção civil e pela dinâmica do território, encontrei na arquitetura o
-              canal ideal para articular rigor técnico, criatividade espacial e responsabilidade social.
-            </p>
-            <p>
-              Durante a minha trajetória académica e profissional, especializei-me na modelagem de
-              informação da construção (BIM com Autodesk Revit e Dynamo) e na aplicação de Sistemas de
-              Informação Geográfica (SIG com QGIS e OpenStreetMap), conectando o desenho do edifício às
-              necessidades de infraestrutura e gestão urbana das cidades moçambicanas.
-            </p>
-            <p>
-              Atuei como coordenador da comunidade YouthMappers Moçambique, liderando equipas em
-              campanhas internacionais de dados abertos para mitigação de riscos de desastres e
-              planeamento participativo em assentamentos informais.
-            </p>
+            <p>{bioP1}</p>
+            {bioP2 && <p>{bioP2}</p>}
+            {bioP3 && <p>{bioP3}</p>}
           </div>
 
           <div className="pt-4 flex flex-wrap gap-4">
@@ -60,15 +69,17 @@ export default async function AboutPage() {
             >
               Falar Conmigo
             </Link>
-            <a
-              href="https://drive.google.com/file/d/1PLqDbRhrFCbv4OgxCZhGxB1yKRgxhRoX/view?usp=sharing"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-6 py-3 border border-[#f5f1ea]/20 text-xs font-display uppercase tracking-widest text-[#f5f1ea] hover:bg-white hover:text-black transition-colors"
-            >
-              <span>Download CV Completo</span>
-              <ArrowUpRight className="w-3.5 h-3.5" />
-            </a>
+            {cvUrl && (
+              <a
+                href={cvUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-6 py-3 border border-[#f5f1ea]/20 text-xs font-display uppercase tracking-widest text-[#f5f1ea] hover:bg-white hover:text-black transition-colors"
+              >
+                <span>Download CV Completo</span>
+                <ArrowUpRight className="w-3.5 h-3.5" />
+              </a>
+            )}
           </div>
         </div>
 
@@ -76,8 +87,8 @@ export default async function AboutPage() {
         <div className="lg:col-span-5 space-y-6">
           <div className="relative aspect-[4/5] overflow-hidden border border-[#f5f1ea]/15 bg-[#141416]">
             <Image
-              src="/images/about_portrait.jpg"
-              alt="Marcelo Júnior Cumbe"
+              src={portrait}
+              alt={authorName}
               fill
               priority
               sizes="(max-width: 1024px) 100vw, 40vw"
@@ -88,15 +99,11 @@ export default async function AboutPage() {
           <div className="p-6 border border-[#f5f1ea]/10 bg-[#121214] space-y-3">
             <div className="flex items-center justify-between text-xs text-[#f5f1ea]/60">
               <span className="font-display uppercase text-[#e8342a]">Base de Trabalho</span>
-              <span>Catembe, Maputo</span>
+              <span>{workBase}</span>
             </div>
             <div className="flex items-center justify-between text-xs text-[#f5f1ea]/60">
-              <span className="font-display uppercase text-[#e8342a]">Instituição</span>
-              <span>Universidade Eduardo Mondlane</span>
-            </div>
-            <div className="flex items-center justify-between text-xs text-[#f5f1ea]/60">
-              <span className="font-display uppercase text-[#e8342a]">Foco</span>
-              <span>BIM · GIS · Arquitetura Sustentável</span>
+              <span className="font-display uppercase text-[#e8342a]">Foco Profissional</span>
+              <span>{focus}</span>
             </div>
           </div>
         </div>
@@ -183,11 +190,11 @@ export default async function AboutPage() {
         </div>
       </section>
 
-      {/* 4. PERCURSO EDUCACIONAL */}
+      {/* 4. PERCURSO EDUCACIONAL (EDITÁVEL PELO CMS) */}
       <section className="space-y-8">
         <div className="border-b border-[#f5f1ea]/10 pb-4">
           <span className="text-[11px] font-display uppercase tracking-[0.2em] text-[#e8342a]">
-            Qualificações
+            Qualificações & Formação
           </span>
           <h2 className="font-display text-2xl sm:text-4xl text-[#f5f1ea]">
             PERCURSO ACADÉMICO

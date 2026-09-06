@@ -6,6 +6,11 @@ import {
   LayoutDashboard,
   FolderKanban,
   PlusCircle,
+  User,
+  Briefcase,
+  GraduationCap,
+  Wrench,
+  Settings,
   Inbox,
   Image as ImageIcon,
   ExternalLink,
@@ -31,6 +36,11 @@ export function AdminSidebar({ userName, userEmail }: AdminSidebarProps) {
     { label: 'Visão Geral', href: '/admin/dashboard', icon: LayoutDashboard },
     { label: 'Projetos', href: '/admin/projects', icon: FolderKanban },
     { label: 'Novo Projeto', href: '/admin/projects/new', icon: PlusCircle },
+    { label: 'Sobre / Perfil', href: '/admin/about', icon: User },
+    { label: 'Experiência', href: '/admin/experience', icon: Briefcase },
+    { label: 'Formação', href: '/admin/education', icon: GraduationCap },
+    { label: 'Competências', href: '/admin/skills', icon: Wrench },
+    { label: 'Definições do Site', href: '/admin/settings', icon: Settings },
     { label: 'Mensagens', href: '/admin/messages', icon: Inbox },
     { label: 'Biblioteca Mídia', href: '/admin/media', icon: ImageIcon },
   ];
@@ -51,7 +61,7 @@ export function AdminSidebar({ userName, userEmail }: AdminSidebarProps) {
         </div>
 
         {/* Links de Navegação */}
-        <nav className="space-y-1.5">
+        <nav className="space-y-1">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
@@ -59,14 +69,14 @@ export function AdminSidebar({ userName, userEmail }: AdminSidebarProps) {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-3 px-3.5 py-2.5 text-xs font-display uppercase tracking-wider transition-colors ${
+                className={`flex items-center gap-3 px-3 py-2 text-xs font-display uppercase tracking-wider transition-colors ${
                   isActive
                     ? 'bg-[#e8342a] text-white'
                     : 'text-[#f5f1ea]/70 hover:bg-[#f5f1ea]/5 hover:text-white'
                 }`}
               >
-                <Icon className="w-4 h-4" />
-                <span>{item.label}</span>
+                <Icon className="w-4 h-4 flex-shrink-0" />
+                <span className="truncate">{item.label}</span>
               </Link>
             );
           })}

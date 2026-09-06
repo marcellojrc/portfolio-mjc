@@ -108,10 +108,10 @@ export function Footer() {
         {/* Linha inferior */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#f5f1ea]/40">
           <div>
-            © {new Date().getFullYear()} Marcelo Júnior Cumbe. Todos os direitos reservados.
+            © Marcelo Junior — {new Date().getFullYear()}
           </div>
           <div className="flex items-center gap-6">
-            <span>Universidade Eduardo Mondlane — FAPF</span>
+            <span>Arquitetura & Planeamento Físico</span>
             <Link
               href="/admin/login"
               className="inline-flex items-center gap-1 hover:text-[#f5f1ea] transition-colors"
