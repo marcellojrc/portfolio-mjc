@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/db';
 import { ProjectForm } from '@/components/admin/ProjectForm';
+import { ProjectMediaItem } from '@/components/admin/ProjectMediaManager';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -11,6 +12,11 @@ export default async function EditProjectPage({ params }: Props) {
 
   const project = await prisma.project.findUnique({
     where: { id },
+    include: {
+      media: {
+        orderBy: { order: 'asc' },
+      },
+    },
   });
 
   if (!project) {
@@ -36,6 +42,14 @@ export default async function EditProjectPage({ params }: Props) {
     featured: project.featured,
     published: project.published,
     description: project.description,
+    media: project.media.map((m) => ({
+      id: m.id,
+      url: m.url,
+      type: m.type as ProjectMediaItem['type'],
+      alt: m.alt,
+      caption: m.caption,
+      order: m.order,
+    })),
   };
 
   return (

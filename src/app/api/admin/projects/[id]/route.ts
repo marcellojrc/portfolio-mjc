@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getSession } from '@/lib/auth';
+import { getSession, requireRoles } from '@/lib/auth';
 import { projectSchema } from '@/schemas';
 
 interface Props {
@@ -9,9 +9,8 @@ interface Props {
 
 export async function PUT(request: Request, { params }: Props) {
   const session = await getSession();
-  if (!session) {
-    return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 });
-  }
+  const authError = requireRoles(session, ['ADMIN', 'EDITOR']);
+  if (authError) return authError;
 
   const { id } = await params;
 
@@ -26,16 +25,42 @@ export async function PUT(request: Request, { params }: Props) {
       );
     }
 
-    const updated = await prisma.project.update({
-      where: { id },
-      data: parseResult.data,
+    const { media, ...projectData } = parseResult.data;
+
+    const updated = await prisma.$transaction(async (tx) => {
+      const project = await tx.project.update({
+        where: { id },
+        data: projectData,
+      });
+
+      if (media !== undefined) {
+        // Remover mídias antigas do projeto e recriar com a nova ordem e legendas
+        await tx.projectMedia.deleteMany({
+          where: { projectId: id },
+        });
+
+        if (media.length > 0) {
+          await tx.projectMedia.createMany({
+            data: media.map((m, idx) => ({
+              projectId: id,
+              url: m.url,
+              type: m.type,
+              alt: m.alt || project.title,
+              caption: m.caption,
+              order: m.order || idx + 1,
+            })),
+          });
+        }
+      }
+
+      return project;
     });
 
     await prisma.activityLog.create({
       data: {
-        userId: session.userId,
+        userId: session!.userId,
         action: 'PROJECT_UPDATED',
-        details: `Projeto atualizado: "${updated.title}".`,
+        details: `Projeto atualizado: "${updated.title}" (#${updated.number}) com galeria sincronizada.`,
       },
     });
 
@@ -48,9 +73,8 @@ export async function PUT(request: Request, { params }: Props) {
 
 export async function PATCH(request: Request, { params }: Props) {
   const session = await getSession();
-  if (!session) {
-    return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 });
-  }
+  const authError = requireRoles(session, ['ADMIN', 'EDITOR']);
+  if (authError) return authError;
 
   const { id } = await params;
 
@@ -69,9 +93,9 @@ export async function PATCH(request: Request, { params }: Props) {
 
     await prisma.activityLog.create({
       data: {
-        userId: session.userId,
+        userId: session!.userId,
         action: 'PROJECT_STATUS_CHANGED',
-        details: `Estado do projeto "${updated.title}" alterado (Publicado: ${updated.published}).`,
+        details: `Estado do projeto "${updated.title}" alterado (Publicado: ${updated.published}, Destaque: ${updated.featured}).`,
       },
     });
 
@@ -84,9 +108,8 @@ export async function PATCH(request: Request, { params }: Props) {
 
 export async function DELETE(request: Request, { params }: Props) {
   const session = await getSession();
-  if (!session) {
-    return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 });
-  }
+  const authError = requireRoles(session, ['ADMIN']); // Apenas ADMIN pode eliminar
+  if (authError) return authError;
 
   const { id } = await params;
 
@@ -97,9 +120,9 @@ export async function DELETE(request: Request, { params }: Props) {
 
     await prisma.activityLog.create({
       data: {
-        userId: session.userId,
+        userId: session!.userId,
         action: 'PROJECT_DELETED',
-        details: `Projeto removido: "${deleted.title}".`,
+        details: `Projeto removido: "${deleted.title}" (#${deleted.number}).`,
       },
     });
 

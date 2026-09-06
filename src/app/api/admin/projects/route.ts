@@ -1,13 +1,12 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getSession } from '@/lib/auth';
+import { getSession, requireRoles } from '@/lib/auth';
 import { projectSchema } from '@/schemas';
 
 export async function POST(request: Request) {
   const session = await getSession();
-  if (!session) {
-    return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 });
-  }
+  const authError = requireRoles(session, ['ADMIN', 'EDITOR']);
+  if (authError) return authError;
 
   try {
     const body = await request.json();
@@ -20,19 +19,39 @@ export async function POST(request: Request) {
       );
     }
 
+    const { media, ...projectData } = parseResult.data;
+
     const count = await prisma.project.count();
-    const newProject = await prisma.project.create({
-      data: {
-        ...parseResult.data,
-        order: count + 1,
-      },
+
+    const newProject = await prisma.$transaction(async (tx) => {
+      const project = await tx.project.create({
+        data: {
+          ...projectData,
+          order: count + 1,
+        },
+      });
+
+      if (media && media.length > 0) {
+        await tx.projectMedia.createMany({
+          data: media.map((m, idx) => ({
+            projectId: project.id,
+            url: m.url,
+            type: m.type,
+            alt: m.alt || project.title,
+            caption: m.caption,
+            order: m.order || idx + 1,
+          })),
+        });
+      }
+
+      return project;
     });
 
     await prisma.activityLog.create({
       data: {
-        userId: session.userId,
+        userId: session!.userId,
         action: 'PROJECT_CREATED',
-        details: `Projeto criado: "${newProject.title}" (${newProject.number}).`,
+        details: `Projeto criado: "${newProject.title}" (#${newProject.number}).`,
       },
     });
 
