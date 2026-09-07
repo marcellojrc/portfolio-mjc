@@ -37,3 +37,7 @@ next-env.d.ts
 Thumbs.db
 .vercel
 .env*
+
+# Local Scratch & Uploads
+work/
+/public/images/uploads/
