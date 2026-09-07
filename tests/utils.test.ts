@@ -43,7 +43,7 @@ describe('Utility Functions', () => {
 
     delete process.env.VERCEL_PROJECT_PRODUCTION_URL;
     Object.defineProperty(process.env, 'NODE_ENV', { value: 'production', configurable: true, writable: true });
-    expect(getBaseUrl()).toBe('https://portfolio-mjc.vercel.app');
+    expect(getBaseUrl()).toBe('https://marcellojrc.vercel.app');
   });
 });
 

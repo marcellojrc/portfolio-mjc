@@ -36,7 +36,7 @@ export function getBaseUrl(): string {
     return `https://${process.env.VERCEL_URL.replace(/\/+$/, '')}`;
   }
   if (process.env.NODE_ENV === 'production') {
-    return 'https://portfolio-mjc.vercel.app';
+    return 'https://marcellojrc.vercel.app';
   }
   return 'http://localhost:3000';
 }
