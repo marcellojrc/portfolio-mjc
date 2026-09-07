@@ -29,6 +29,9 @@ export const metadata: Metadata = {
     default: 'MJC — Marcelo Cumbe | Arquitetura & Planeamento Físico',
     template: '%s | MJC Architecture',
   },
+  verification: {
+    google: 'I2ePfSxLJEWAVKAoc6XYAG6q-oMacf1BNiC7heUztsQ',
+  },
   description:
     'Portfólio e plataforma de arquitetura de Marcelo Júnior Cumbe. Projetos habitacionais, equipamentos públicos, planeamento urbano, modelação BIM e cartografia em Moçambique.',
   keywords: [
