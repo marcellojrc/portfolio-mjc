@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Archivo, Archivo_Black } from 'next/font/google';
+import { getBaseUrl } from '@/lib/utils';
 import './globals.css';
 
 const archivo = Archivo({
@@ -23,7 +24,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
+  metadataBase: new URL(getBaseUrl()),
   title: {
     default: 'MJC — Marcelo Cumbe | Arquitetura & Planeamento Físico',
     template: '%s | MJC Architecture',

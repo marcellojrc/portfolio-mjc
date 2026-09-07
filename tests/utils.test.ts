@@ -1,7 +1,17 @@
-import { describe, it, expect } from 'vitest';
-import { slugify, formatDate } from '@/lib/utils';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { slugify, formatDate, getBaseUrl } from '@/lib/utils';
 
 describe('Utility Functions', () => {
+  const originalEnv = process.env;
+
+  beforeEach(() => {
+    process.env = { ...originalEnv };
+  });
+
+  afterEach(() => {
+    process.env = originalEnv;
+  });
+
   it('correctly creates slugs from project titles with accents', () => {
     expect(slugify('Edifício Changule')).toBe('edificio-changule');
     expect(slugify('Requalificação Urbana — Polana Caniço A')).toBe(
@@ -15,4 +25,25 @@ describe('Utility Functions', () => {
     const formatted = formatDate(date);
     expect(formatted).toContain('2026');
   });
+
+  it('resolves getBaseUrl based on environment variables', () => {
+    delete process.env.NEXT_PUBLIC_SITE_URL;
+    delete process.env.VERCEL_PROJECT_PRODUCTION_URL;
+    delete process.env.VERCEL_URL;
+    Object.defineProperty(process.env, 'NODE_ENV', { value: 'development', configurable: true, writable: true });
+
+    expect(getBaseUrl()).toBe('http://localhost:3000');
+
+    process.env.NEXT_PUBLIC_SITE_URL = 'https://portfolio-mjc.vercel.app/';
+    expect(getBaseUrl()).toBe('https://portfolio-mjc.vercel.app');
+
+    delete process.env.NEXT_PUBLIC_SITE_URL;
+    process.env.VERCEL_PROJECT_PRODUCTION_URL = 'portfolio-mjc-marcellojrc.vercel.app';
+    expect(getBaseUrl()).toBe('https://portfolio-mjc-marcellojrc.vercel.app');
+
+    delete process.env.VERCEL_PROJECT_PRODUCTION_URL;
+    Object.defineProperty(process.env, 'NODE_ENV', { value: 'production', configurable: true, writable: true });
+    expect(getBaseUrl()).toBe('https://portfolio-mjc.vercel.app');
+  });
 });
+

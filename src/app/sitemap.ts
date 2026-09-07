@@ -1,11 +1,12 @@
 import { MetadataRoute } from 'next';
 import { prisma } from '@/lib/db';
+import { getBaseUrl } from '@/lib/utils';
 
 // O sitemap inclui projetos publicados e é gerado com os dados atuais em runtime.
 export const dynamic = 'force-dynamic';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+  const baseUrl = getBaseUrl();
 
   const projects = await prisma.project.findMany({
     where: { published: true },
