@@ -77,8 +77,8 @@ npm run dev
 Abra [http://localhost:3000](http://localhost:3000) no seu navegador para ver o website público.
 
 Para aceder ao Painel Administrativo, visite [http://localhost:3000/admin](http://localhost:3000/admin):
-- **Email:** `marcelojuniord07@gmail.com`
-- **Palavra-passe padrão:** `admin_mjc_2026!` *(definida no .env)*
+
+Use as credenciais de administrador definidas localmente em variáveis de ambiente. Não inclua emails de acesso, palavras-passe, tokens ou connection strings no repositório.
 
 ---
 
@@ -113,7 +113,7 @@ npm run build
    npm run db:migrate-to-neon -- --apply
    ```
    A importação recusa bases Neon que já contenham dados e só declara sucesso após verificar as contagens do dump.
-5. Configure `BLOB_READ_WRITE_TOKEN` na Vercel. Em produção, uploads não recorrem ao disco efémero: sem esse token, são recusados.
+5. Configure o Vercel Blob através da integração oficial. Em produção, uploads não recorrem ao disco efémero; mantenha os tokens e IDs de store apenas nas variáveis de ambiente da Vercel.
 
 ---
 
