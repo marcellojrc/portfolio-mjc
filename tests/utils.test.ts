@@ -28,21 +28,20 @@ describe('Utility Functions', () => {
 
   it('resolves getBaseUrl based on environment variables', () => {
     delete process.env.NEXT_PUBLIC_SITE_URL;
-    delete process.env.VERCEL_PROJECT_PRODUCTION_URL;
-    delete process.env.VERCEL_URL;
+    delete process.env.VERCEL;
     Object.defineProperty(process.env, 'NODE_ENV', { value: 'development', configurable: true, writable: true });
 
     expect(getBaseUrl()).toBe('http://localhost:3000');
 
-    process.env.NEXT_PUBLIC_SITE_URL = 'https://portfolio-mjc.vercel.app/';
-    expect(getBaseUrl()).toBe('https://portfolio-mjc.vercel.app');
+    process.env.NEXT_PUBLIC_SITE_URL = 'https://marcellojrc.vercel.app/';
+    expect(getBaseUrl()).toBe('https://marcellojrc.vercel.app');
 
     delete process.env.NEXT_PUBLIC_SITE_URL;
-    process.env.VERCEL_PROJECT_PRODUCTION_URL = 'portfolio-mjc-marcellojrc.vercel.app';
-    expect(getBaseUrl()).toBe('https://portfolio-mjc-marcellojrc.vercel.app');
-
-    delete process.env.VERCEL_PROJECT_PRODUCTION_URL;
     Object.defineProperty(process.env, 'NODE_ENV', { value: 'production', configurable: true, writable: true });
+    expect(getBaseUrl()).toBe('https://marcellojrc.vercel.app');
+
+    Object.defineProperty(process.env, 'NODE_ENV', { value: 'development', configurable: true, writable: true });
+    process.env.VERCEL = '1';
     expect(getBaseUrl()).toBe('https://marcellojrc.vercel.app');
   });
 });
