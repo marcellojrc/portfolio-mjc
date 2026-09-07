@@ -60,21 +60,32 @@ export async function POST(request: Request) {
 
     let publicUrl: string;
 
-    // 4. Armazenamento persistente: Vercel Blob em produção se token existir
-    if (process.env.BLOB_READ_WRITE_TOKEN) {
+    // 4. Armazenamento persistente: Vercel Blob é obrigatório em produção.
+    // Em deploys Vercel, OIDC + BLOB_STORE_ID substitui o token de leitura/escrita.
+    const hasBlobCredentials = Boolean(
+      process.env.BLOB_READ_WRITE_TOKEN ||
+        (process.env.VERCEL_OIDC_TOKEN && process.env.BLOB_STORE_ID)
+    );
+
+    if (hasBlobCredentials) {
       const blob = await put(safeFilename, buffer, {
         access: 'public',
         contentType: file.type,
       });
       publicUrl = blob.url;
-    } else {
-      // Fallback para disco local (Desenvolvimento local)
+    } else if (process.env.NODE_ENV !== 'production') {
+      // Disco local apenas em desenvolvimento; o sistema de ficheiros da Vercel é efémero.
       const uploadDir = path.join(process.cwd(), 'public', 'images', 'uploads');
       await mkdir(uploadDir, { recursive: true });
 
       const filePath = path.join(uploadDir, safeFilename);
       await writeFile(filePath, buffer);
       publicUrl = `/images/uploads/${safeFilename}`;
+    } else {
+      return NextResponse.json(
+        { error: 'Uploads em produção exigem BLOB_READ_WRITE_TOKEN configurado na Vercel.' },
+        { status: 503 }
+      );
     }
 
     return NextResponse.json({

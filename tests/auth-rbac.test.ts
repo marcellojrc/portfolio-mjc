@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { hasPermission, requireRoles, getJwtSecret, type AdminPayload } from '@/lib/auth';
 
+process.env.AUTH_SECRET ??= 'test-auth-secret-that-is-at-least-thirty-two-characters';
+
 describe('RBAC & Security Authentication', () => {
   it('correctly evaluates role permissions', () => {
     expect(hasPermission('ADMIN', ['ADMIN'])).toBe(true);
@@ -43,7 +45,7 @@ describe('RBAC & Security Authentication', () => {
     expect(allowed).toBeNull();
   });
 
-  it('returns valid JWT secret key in development mode', () => {
+  it('returns a configured JWT secret key', () => {
     const secret = getJwtSecret();
     expect(secret).toBeInstanceOf(Uint8Array);
     expect(secret.length).toBeGreaterThanOrEqual(16);

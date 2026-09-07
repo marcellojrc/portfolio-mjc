@@ -26,6 +26,7 @@ prisma/dev.db-journal
 *.db
 *.db-journal
 prisma/backups/
+prisma/generated/
 
 # TypeScript
 *.tsbuildinfo
@@ -34,3 +35,5 @@ next-env.d.ts
 # OS Files
 .DS_Store
 Thumbs.db
+.vercel
+.env*

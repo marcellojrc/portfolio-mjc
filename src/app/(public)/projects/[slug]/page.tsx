@@ -10,13 +10,8 @@ interface Props {
   params: Promise<{ slug: string }>;
 }
 
-export async function generateStaticParams() {
-  const projects = await prisma.project.findMany({
-    where: { published: true },
-    select: { slug: true },
-  });
-  return projects.map((p) => ({ slug: p.slug }));
-}
+// Projetos são conteúdo de CMS: gerar em runtime evita que o build dependa do Neon.
+export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;

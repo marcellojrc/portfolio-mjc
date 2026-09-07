@@ -100,20 +100,20 @@ npm run build
 ## 🚀 Preparação para Produção (Vercel + PostgreSQL)
 
 1. Crie uma base de dados PostgreSQL gratuita (ex.: [Neon.tech](https://neon.tech) ou [Supabase](https://supabase.com)).
-2. No ficheiro `prisma/schema.prisma`, altere o provider para `postgresql`:
-   ```prisma
-   datasource db {
-     provider = "postgresql"
-     url      = env("DATABASE_URL")
-   }
-   ```
+2. O ficheiro `prisma/schema.prisma` já usa PostgreSQL; mantenha `prisma/schema.sqlite.prisma` exclusivamente para cópias de segurança e leitura do SQLite local.
 3. Defina as variáveis de ambiente na Vercel:
    - `DATABASE_URL`: Connection string do seu PostgreSQL.
    - `AUTH_SECRET`: Segredo longo e aleatório (`openssl rand -base64 32`).
    - `ADMIN_EMAIL`: O seu email de acesso.
    - `ADMIN_DEFAULT_PASSWORD`: A sua palavra-passe forte.
    - `NEXT_PUBLIC_SITE_URL`: Domínio final do website (ex.: `https://marcelocumbe.com`).
-4. Execute `npx prisma db push && npx tsx prisma/seed.ts` uma única vez para povoar os dados em produção.
+4. Com uma URL Neon nova e vazia, aplique o schema e importe o dump preservando IDs e relações:
+   ```bash
+   npm run db:migrate-deploy
+   npm run db:migrate-to-neon -- --apply
+   ```
+   A importação recusa bases Neon que já contenham dados e só declara sucesso após verificar as contagens do dump.
+5. Configure `BLOB_READ_WRITE_TOKEN` na Vercel. Em produção, uploads não recorrem ao disco efémero: sem esse token, são recusados.
 
 ---
 

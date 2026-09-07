@@ -12,6 +12,11 @@ import * as path from 'path';
 async function migrate() {
   console.log('=== MIGRAÇÃO SEGURA PARA NEON POSTGRESQL ===\n');
 
+  if (!process.argv.includes('--apply')) {
+    console.error('Migração não iniciada. Reveja o backup e execute novamente com --apply para autorizar escrita no Neon.');
+    process.exit(1);
+  }
+
   const targetUrl = process.env.DATABASE_URL;
   if (!targetUrl || targetUrl.startsWith('file:')) {
     console.error('ERRO: A variável DATABASE_URL deve apontar para uma base de dados PostgreSQL (Neon).');
@@ -37,6 +42,26 @@ async function migrate() {
   });
 
   try {
+    const existingCounts = await Promise.all([
+      prisma.user.count(),
+      prisma.project.count(),
+      prisma.projectMedia.count(),
+      prisma.experience.count(),
+      prisma.education.count(),
+      prisma.skill.count(),
+      prisma.contactMessage.count(),
+      prisma.activityLog.count(),
+      prisma.siteSettings.count(),
+    ]);
+    if (existingCounts.some((count) => count > 0)) {
+      throw new Error(
+        'O Neon de destino já contém dados. A migração foi cancelada para evitar alterações ou sobreposição de registos existentes.'
+      );
+    }
+
+    await prisma.$transaction(async (tx) => {
+      const prisma = tx;
+
     console.log('1. Migrando Utilizadores...');
     for (const u of data.users) {
       await prisma.user.upsert({
@@ -196,6 +221,8 @@ async function migrate() {
       });
     }
 
+    }, { timeout: 20_000 });
+
     // Validação comparativa
     console.log('\n--- VERIFICAÇÃO DE PARIDADE SQLITE vs NEON ---');
     const [
@@ -205,6 +232,8 @@ async function migrate() {
       expCount,
       eduCount,
       skillsCount,
+      messagesCount,
+      logsCount,
       settingsCount,
     ] = await Promise.all([
       prisma.user.count(),
@@ -213,6 +242,8 @@ async function migrate() {
       prisma.experience.count(),
       prisma.education.count(),
       prisma.skill.count(),
+      prisma.contactMessage.count(),
+      prisma.activityLog.count(),
       prisma.siteSettings.count(),
     ]);
 
@@ -223,10 +254,27 @@ async function migrate() {
       'Experiências': { SQLite: metadata.counts.experiences, Neon: expCount },
       'Formações': { SQLite: metadata.counts.educations, Neon: eduCount },
       'Skills': { SQLite: metadata.counts.skills, Neon: skillsCount },
+      'Mensagens': { SQLite: metadata.counts.contactMessages, Neon: messagesCount },
+      'Logs de Atividade': { SQLite: metadata.counts.activityLogs, Neon: logsCount },
       'Configurações': { SQLite: metadata.counts.siteSettings, Neon: settingsCount },
     };
 
     console.table(parityTable);
+
+    const parityOk =
+      usersCount === metadata.counts.users &&
+      projectsCount === metadata.counts.projects &&
+      mediaCount === metadata.counts.projectMedia &&
+      expCount === metadata.counts.experiences &&
+      eduCount === metadata.counts.educations &&
+      skillsCount === metadata.counts.skills &&
+      messagesCount === metadata.counts.contactMessages &&
+      logsCount === metadata.counts.activityLogs &&
+      settingsCount === metadata.counts.siteSettings;
+
+    if (!parityOk) {
+      throw new Error('A migração terminou sem paridade total. Não prossiga para produção até investigar as contagens acima.');
+    }
 
     console.log('\n✓ MIGRAÇÃO CONCLUÍDA COM 100% DE PARIDADE E SUCESSO!');
   } finally {

@@ -29,10 +29,10 @@ jobs:
         run: npm ci
 
       - name: Gerar Prisma Client
-        run: npx prisma generate
+        run: npx prisma generate --schema prisma/schema.sqlite.prisma
 
       - name: Preparar Base de Dados CI
-        run: npx prisma db push
+        run: npx prisma db push --schema prisma/schema.sqlite.prisma
 
       - name: Verificação de Tipos
         run: npm run typecheck

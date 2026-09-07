@@ -2,6 +2,9 @@ import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { prisma } from '@/lib/db';
 
+// Conteúdo do CMS deve refletir alterações sem exigir acesso à base durante o build.
+export const dynamic = 'force-dynamic';
+
 export default async function PublicLayout({
   children,
 }: {

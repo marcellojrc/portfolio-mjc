@@ -5,16 +5,13 @@ import { jwtVerify } from 'jose';
 function getJwtSecret(): Uint8Array {
   const secret = process.env.AUTH_SECRET;
 
-  if (process.env.NODE_ENV === 'production') {
-    if (!secret || secret.length < 16) {
-      throw new Error(
-        'ERRO CRÍTICO DE SEGURANÇA: AUTH_SECRET não configurado em ambiente de produção.'
-      );
-    }
-    return new TextEncoder().encode(secret);
+  if (!secret || secret.length < 32) {
+    throw new Error(
+      'ERRO CRÍTICO DE SEGURANÇA: AUTH_SECRET tem de estar configurado e ter pelo menos 32 caracteres.'
+    );
   }
 
-  return new TextEncoder().encode(secret || 'mjc-dev-temporary-secret-key-32-bytes-minimum');
+  return new TextEncoder().encode(secret);
 }
 
 const COOKIE_NAME = 'mjc_admin_session';

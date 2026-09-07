@@ -17,17 +17,13 @@ const COOKIE_NAME = 'mjc_admin_session';
 export function getJwtSecret(): Uint8Array {
   const secret = process.env.AUTH_SECRET;
 
-  if (process.env.NODE_ENV === 'production') {
-    if (!secret || secret.length < 16) {
-      throw new Error(
-        'ERRO CRÍTICO DE SEGURANÇA: A variável de ambiente AUTH_SECRET não está definida ou é demasiado curta em produção. O arranque foi bloqueado.'
-      );
-    }
-    return new TextEncoder().encode(secret);
+  if (!secret || secret.length < 32) {
+    throw new Error(
+      'ERRO CRÍTICO DE SEGURANÇA: AUTH_SECRET tem de estar configurado e ter pelo menos 32 caracteres.'
+    );
   }
 
-  // Fallback seguro apenas para ambiente de desenvolvimento e testes locais
-  return new TextEncoder().encode(secret || 'mjc-dev-temporary-secret-key-32-bytes-minimum');
+  return new TextEncoder().encode(secret);
 }
 
 export async function hashPassword(password: string): Promise<string> {
