@@ -1,11 +1,22 @@
 import { Metadata } from 'next';
 import { prisma } from '@/lib/db';
 import { ProjectsCatalog } from '@/components/projects/ProjectsCatalog';
+import { JsonLd } from '@/components/seo/JsonLd';
+import { getWebPageSchema } from '@/lib/seo';
 
 export const metadata: Metadata = {
   title: 'Projetos Arquitetónicos',
   description:
     'Catálogo completo de projetos de arquitetura, habitação multifamiliar, equipamentos públicos, planeamento urbano e modelagem BIM por Marcelo Júnior Cumbe.',
+  alternates: {
+    canonical: '/projects',
+  },
+  openGraph: {
+    title: 'Projetos Arquitetónicos | MJC Architecture',
+    description:
+      'Catálogo completo de projetos de arquitetura, habitação multifamiliar, equipamentos públicos, planeamento urbano e modelagem BIM por Marcelo Júnior Cumbe.',
+    url: '/projects',
+  },
 };
 
 export const revalidate = 60;
@@ -30,8 +41,21 @@ export default async function ProjectsPage() {
     },
   });
 
+  const projectsSchema = getWebPageSchema({
+    path: '/projects',
+    name: 'Projetos Arquitetónicos | MJC Architecture',
+    description:
+      'Catálogo completo de projetos de arquitetura, habitação multifamiliar, equipamentos públicos, planeamento urbano e modelagem BIM por Marcelo Júnior Cumbe.',
+    type: 'CollectionPage',
+    breadcrumbs: [
+      { name: 'Início', url: '/' },
+      { name: 'Projetos', url: '/projects' },
+    ],
+  });
+
   return (
     <div className="arch-container py-12 sm:py-20 space-y-12">
+      <JsonLd data={projectsSchema} />
       {/* Cabeçalho da Página */}
       <div className="space-y-4 max-w-3xl border-b border-[#f5f1ea]/15 pb-8">
         <span className="text-[11px] font-display uppercase tracking-[0.2em] text-[#e8342a]">

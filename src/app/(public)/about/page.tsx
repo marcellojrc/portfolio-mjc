@@ -4,10 +4,22 @@ import Link from 'next/link';
 import { prisma } from '@/lib/db';
 import { ArrowUpRight, GraduationCap, MapPin, Wrench, Globe } from 'lucide-react';
 
+import { JsonLd } from '@/components/seo/JsonLd';
+import { getWebPageSchema } from '@/lib/seo';
+
 export const metadata: Metadata = {
   title: 'Sobre Marcelo Cumbe',
   description:
     'Perfil profissional, formação académica, filosofia arquitetónica e ferramentas de Marcelo Júnior Cumbe.',
+  alternates: {
+    canonical: '/about',
+  },
+  openGraph: {
+    title: 'Sobre Marcelo Cumbe | MJC Architecture',
+    description:
+      'Perfil profissional, formação académica, filosofia arquitetónica e ferramentas de Marcelo Júnior Cumbe.',
+    url: '/about',
+  },
 };
 
 export const revalidate = 60;
@@ -41,8 +53,22 @@ export default async function AboutPage() {
     settings.author_cv_url ||
     'https://drive.google.com/file/d/1PLqDbRhrFCbv4OgxCZhGxB1yKRgxhRoX/view?usp=sharing';
 
+  const aboutSchema = getWebPageSchema({
+    path: '/about',
+    name: `Sobre ${authorName} | MJC Architecture`,
+    description:
+      bioP1 || 'Perfil profissional, formação académica e filosofia de Marcelo Júnior Cumbe.',
+    type: 'AboutPage',
+    breadcrumbs: [
+      { name: 'Início', url: '/' },
+      { name: 'Sobre', url: '/about' },
+    ],
+  });
+
   return (
     <div className="arch-container py-12 sm:py-20 space-y-20 sm:space-y-32">
+      <JsonLd data={aboutSchema} />
+
       {/* 1. CABEÇALHO & APRESENTAÇÃO */}
       <section className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
         <div className="lg:col-span-7 space-y-6">
@@ -88,7 +114,7 @@ export default async function AboutPage() {
           <div className="relative aspect-[4/5] overflow-hidden border border-[#f5f1ea]/15 bg-[#141416]">
             <Image
               src={portrait}
-              alt={authorName}
+              alt={`${authorName} — Retrato Profissional`}
               fill
               priority
               sizes="(max-width: 1024px) 100vw, 40vw"

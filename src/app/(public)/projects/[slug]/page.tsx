@@ -4,6 +4,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { prisma } from '@/lib/db';
 import { CaseStudyGallery } from '@/components/projects/CaseStudyGallery';
+import { JsonLd } from '@/components/seo/JsonLd';
+import { getProjectSchema, getBreadcrumbListSchema } from '@/lib/seo';
 import { ArrowLeft, ArrowRight, MapPin, Calendar, Maximize, UserCheck, Wrench, ShieldCheck } from 'lucide-react';
 
 interface Props {
@@ -24,9 +26,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: `${project.title} — ${project.category}`,
     description: project.description.slice(0, 160),
+    alternates: {
+      canonical: `/projects/${project.slug}`,
+    },
     openGraph: {
       title: `${project.title} | MJC Architecture`,
       description: project.description.slice(0, 160),
+      url: `/projects/${project.slug}`,
       images: [{ url: project.coverImage }],
     },
   };
@@ -63,36 +69,32 @@ export default async function ProjectCaseStudyPage({ params }: Props) {
   ]);
 
   // Schema.org Structured Data
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'VisualArtwork',
-    name: project.title,
-    artform: 'Architecture',
-    creator: {
-      '@type': 'Person',
-      name: 'Marcelo Júnior Cumbe',
-    },
-    locationCreated: {
-      '@type': 'Place',
-      name: project.location,
-    },
+  const projectSchema = getProjectSchema({
+    slug: project.slug,
+    title: project.title,
+    category: project.category,
     description: project.description,
-    image: project.coverImage,
-  };
+    coverImage: project.coverImage,
+    location: project.location,
+    year: project.year,
+  });
+
+  const breadcrumbsSchema = getBreadcrumbListSchema([
+    { name: 'Início', url: '/' },
+    { name: 'Projetos', url: '/projects' },
+    { name: project.title, url: `/projects/${project.slug}` },
+  ]);
 
   return (
     <article className="space-y-16 sm:space-y-24 pb-24">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <JsonLd data={[projectSchema, breadcrumbsSchema]} />
 
       {/* 1. HERO DO PROJETO COM IMAGEM DE CAPA */}
       <section className="relative min-h-[60vh] sm:min-h-[75vh] flex flex-col justify-end px-5 sm:px-12 pb-12 pt-28 bg-black overflow-hidden border-b border-[#f5f1ea]/15">
         <div className="absolute inset-0 z-0">
           <Image
             src={project.coverImage}
-            alt={project.title}
+            alt={`${project.title} — ${project.category}`}
             fill
             priority
             sizes="100vw"

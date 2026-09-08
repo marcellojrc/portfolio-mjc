@@ -1,11 +1,22 @@
 import { Metadata } from 'next';
 import { prisma } from '@/lib/db';
 import { Briefcase, Calendar, MapPin, CheckCircle2 } from 'lucide-react';
+import { JsonLd } from '@/components/seo/JsonLd';
+import { getWebPageSchema } from '@/lib/seo';
 
 export const metadata: Metadata = {
   title: 'Trajetória Profissional & Docência',
   description:
     'Experiência profissional de Marcelo Júnior Cumbe em arquitetura, docência de software BIM (Revit) e coordenação de mapeamento humanitário digital.',
+  alternates: {
+    canonical: '/experience',
+  },
+  openGraph: {
+    title: 'Trajetória Profissional & Docência | MJC Architecture',
+    description:
+      'Experiência profissional de Marcelo Júnior Cumbe em arquitetura, docência de software BIM (Revit) e coordenação de mapeamento humanitário digital.',
+    url: '/experience',
+  },
 };
 
 export const revalidate = 60;
@@ -15,8 +26,20 @@ export default async function ExperiencePage() {
     orderBy: { order: 'asc' },
   });
 
+  const experienceSchema = getWebPageSchema({
+    path: '/experience',
+    name: 'Trajetória Profissional & Docência | MJC Architecture',
+    description:
+      'Experiência profissional de Marcelo Júnior Cumbe em arquitetura, docência de software BIM (Revit) e coordenação de mapeamento humanitário digital.',
+    breadcrumbs: [
+      { name: 'Início', url: '/' },
+      { name: 'Experiência', url: '/experience' },
+    ],
+  });
+
   return (
     <div className="arch-container py-12 sm:py-20 space-y-16">
+      <JsonLd data={experienceSchema} />
       {/* Cabeçalho */}
       <div className="space-y-4 max-w-3xl border-b border-[#f5f1ea]/15 pb-8">
         <span className="text-[11px] font-display uppercase tracking-[0.2em] text-[#e8342a]">

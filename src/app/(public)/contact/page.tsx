@@ -1,16 +1,40 @@
 import { Metadata } from 'next';
 import { ContactForm } from '@/components/contact/ContactForm';
 import { Mail, Phone, MapPin, Linkedin, Instagram, FileText, ArrowUpRight } from 'lucide-react';
+import { JsonLd } from '@/components/seo/JsonLd';
+import { getWebPageSchema } from '@/lib/seo';
 
 export const metadata: Metadata = {
   title: 'Contacto & Consultoria',
   description:
     'Entre em contacto com Marcelo Júnior Cumbe para novos projetos de arquitetura, consultoria BIM, desenho urbano ou colaborações técnicas em Moçambique.',
+  alternates: {
+    canonical: '/contact',
+  },
+  openGraph: {
+    title: 'Contacto & Consultoria | MJC Architecture',
+    description:
+      'Entre em contacto com Marcelo Júnior Cumbe para novos projetos de arquitetura, consultoria BIM, desenho urbano ou colaborações técnicas em Moçambique.',
+    url: '/contact',
+  },
 };
 
 export default function ContactPage() {
+  const contactSchema = getWebPageSchema({
+    path: '/contact',
+    name: 'Contacto & Consultoria | MJC Architecture',
+    description:
+      'Entre em contacto com Marcelo Júnior Cumbe para novos projetos de arquitetura, consultoria BIM, desenho urbano ou colaborações técnicas em Moçambique.',
+    type: 'ContactPage',
+    breadcrumbs: [
+      { name: 'Início', url: '/' },
+      { name: 'Contacto', url: '/contact' },
+    ],
+  });
+
   return (
     <div className="arch-container py-12 sm:py-20 space-y-16">
+      <JsonLd data={contactSchema} />
       {/* Cabeçalho */}
       <div className="space-y-4 max-w-3xl border-b border-[#f5f1ea]/15 pb-8">
         <span className="text-[11px] font-display uppercase tracking-[0.2em] text-[#e8342a]">

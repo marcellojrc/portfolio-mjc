@@ -2,6 +2,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { prisma } from '@/lib/db';
 import { ProjectCard } from '@/components/projects/ProjectCard';
+import { JsonLd } from '@/components/seo/JsonLd';
+import { getPersonSchema, getWebSiteSchema, getWebPageSchema } from '@/lib/seo';
 import { ArrowUpRight, ArrowDown, Compass, Layers, MapPin, Building2 } from 'lucide-react';
 
 export const revalidate = 60; // Revalidação a cada minuto
@@ -23,15 +25,28 @@ export default async function HomePage() {
 
   const settings = Object.fromEntries(rawSettings.map((s) => [s.key, s.value]));
 
+  const homepageSchema = [
+    getPersonSchema(),
+    getWebSiteSchema(),
+    getWebPageSchema({
+      path: '/',
+      name: 'MJC — Marcelo Cumbe | Arquitetura & Planeamento Físico',
+      description:
+        'Portfólio contemporâneo de arquitetura, urbanismo e tecnologias BIM/GIS por Marcelo Júnior Cumbe. Maputo, Moçambique.',
+    }),
+  ];
+
   return (
     <div className="space-y-24 sm:space-y-36 pb-24">
+      <JsonLd data={homepageSchema} />
+
       {/* 1. HERO CINEMÁTICO */}
       <section className="relative min-h-[92vh] flex flex-col justify-end px-5 sm:px-12 pb-16 pt-32 overflow-hidden bg-black">
         {/* Imagem de Fundo com Escala Arquitetónica */}
         <div className="absolute inset-0 z-0">
           <Image
             src="/images/hero_bg.jpg"
-            alt="MJC Architecture Atmosphere"
+            alt="MJC Architecture — Portfólio de Marcelo Júnior Cumbe"
             fill
             priority
             sizes="100vw"
