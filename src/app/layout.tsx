@@ -25,6 +25,9 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL(getBaseUrl()),
+  alternates: {
+    canonical: '/',
+  },
   title: {
     default: 'MJC — Marcelo Cumbe | Arquitetura & Planeamento Físico',
     template: '%s | MJC Architecture',
