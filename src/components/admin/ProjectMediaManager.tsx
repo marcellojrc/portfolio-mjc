@@ -14,6 +14,7 @@ import {
   Loader2,
   X,
   AlertCircle,
+  RefreshCw,
 } from 'lucide-react';
 
 export interface ProjectMediaItem {
@@ -60,7 +61,12 @@ export function ProjectMediaManager({
   const [libraryMedia, setLibraryMedia] = useState<{ id: string; url: string; alt: string }[]>([]);
   const [loadingLibrary, setLoadingLibrary] = useState(false);
 
-  // Processar ficheiro enviado
+  // Estados de Substituição e Eliminação Segura
+  const [replacingIndex, setReplacingIndex] = useState<number | null>(null);
+  const [confirmDeleteIndex, setConfirmDeleteIndex] = useState<number | null>(null);
+  const replaceInputRef = useRef<HTMLInputElement>(null);
+
+  // Processar ficheiro enviado (Novo item)
   async function handleUploadFile(file: File) {
     setUploading(true);
     setError(null);
@@ -98,7 +104,7 @@ export function ProjectMediaManager({
         onCoverImageChange(data.url);
       }
 
-      setUploadProgress('Upload concluído com sucesso!');
+      setUploadProgress('Imagem adicionada com sucesso!');
       setTimeout(() => setUploadProgress(null), 3000);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Erro ao carregar ficheiro.';
@@ -107,6 +113,62 @@ export function ProjectMediaManager({
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
       if (cameraInputRef.current) cameraInputRef.current.value = '';
+    }
+  }
+
+  // Processar Substituição Transacional (OLD -> NEW com sincronização de capa)
+  async function handleReplaceFile(file: File, indexToReplace: number) {
+    if (indexToReplace < 0 || indexToReplace >= media.length) return;
+    const oldItem = media[indexToReplace];
+
+    setUploading(true);
+    setError(null);
+    setUploadProgress(`A substituir imagem por ${file.name}...`);
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const res = await fetch('/api/admin/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Falha ao processar substituição da imagem.');
+      }
+
+      // 1. Atualizar o item da galeria com o novo URL, preservando metadados (tipo, legenda, alt, ordem)
+      const updated = [...media];
+      updated[indexToReplace] = {
+        ...oldItem,
+        url: data.url,
+      };
+      onMediaChange(updated);
+
+      // 2. Se a imagem antiga era a capa do projeto, atualizar a capa atomicamente para o novo URL
+      if (coverImage === oldItem.url) {
+        onCoverImageChange(data.url);
+      }
+
+      setUploadProgress('Imagem substituída com sucesso!');
+      setTimeout(() => setUploadProgress(null), 3000);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Erro ao substituir imagem.';
+      setError(msg);
+    } finally {
+      setUploading(false);
+      setReplacingIndex(null);
+      if (replaceInputRef.current) replaceInputRef.current.value = '';
+    }
+  }
+
+  function handleReplaceFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file && replacingIndex !== null) {
+      handleReplaceFile(file, replacingIndex);
     }
   }
 
@@ -173,7 +235,7 @@ export function ProjectMediaManager({
     onMediaChange(updated);
   }
 
-  function removeItem(index: number) {
+  function confirmRemoveItem(index: number) {
     const itemToRemove = media[index];
     const updated = media.filter((_, i) => i !== index);
 
@@ -183,8 +245,13 @@ export function ProjectMediaManager({
 
     // Se removeu a imagem de capa, reatribuir para a primeira restante
     if (coverImage === itemToRemove.url) {
-      onCoverImageChange(reordered.length > 0 ? reordered[0].url : '');
+      const nextCover = reordered.length > 0 ? reordered[0].url : '';
+      onCoverImageChange(nextCover);
     }
+
+    setConfirmDeleteIndex(null);
+    setUploadProgress('Imagem removida da galeria.');
+    setTimeout(() => setUploadProgress(null), 3000);
   }
 
   function moveItem(index: number, direction: 'up' | 'down') {
@@ -251,6 +318,14 @@ export function ProjectMediaManager({
           onChange={handleFileChange}
           className="hidden"
           id="camera-upload-dialog"
+        />
+        <input
+          ref={replaceInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/avif"
+          onChange={handleReplaceFileChange}
+          className="hidden"
+          id="replace-upload-dialog"
         />
 
         {/* Botões de Ação */}
@@ -370,19 +445,37 @@ export function ProjectMediaManager({
                       )}
                     </div>
 
-                    {/* Botão para definir como capa */}
-                    <button
-                      type="button"
-                      onClick={() => onCoverImageChange(item.url)}
-                      className={`w-full py-1.5 px-2 text-[11px] font-display uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors ${
-                        isCover
-                          ? 'bg-[#e8342a] text-white'
-                          : 'border border-[#f5f1ea]/20 text-[#f5f1ea]/80 hover:border-[#e8342a] hover:text-[#e8342a]'
-                      }`}
-                    >
-                      <Star className={`w-3 h-3 ${isCover ? 'fill-current' : ''}`} />
-                      <span>{isCover ? 'Imagem de Capa' : 'Definir como Capa'}</span>
-                    </button>
+                    {/* Botões de Ação na Thumbnail */}
+                    <div className="flex flex-col gap-1.5">
+                      {/* Botão para definir como capa */}
+                      <button
+                        type="button"
+                        onClick={() => onCoverImageChange(item.url)}
+                        className={`w-full py-1.5 px-2 text-[11px] font-display uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors ${
+                          isCover
+                            ? 'bg-[#e8342a] text-white'
+                            : 'border border-[#f5f1ea]/20 text-[#f5f1ea]/80 hover:border-[#e8342a] hover:text-[#e8342a]'
+                        }`}
+                      >
+                        <Star className={`w-3 h-3 ${isCover ? 'fill-current' : ''}`} />
+                        <span>{isCover ? 'Imagem de Capa' : 'Definir como Capa'}</span>
+                      </button>
+
+                      {/* Botão para Substituir Imagem */}
+                      <button
+                        type="button"
+                        disabled={uploading}
+                        onClick={() => {
+                          setReplacingIndex(index);
+                          replaceInputRef.current?.click();
+                        }}
+                        className="w-full py-1.5 px-2 text-[11px] font-display uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors border border-[#f5f1ea]/20 text-[#f5f1ea]/80 hover:border-white hover:text-white disabled:opacity-50"
+                        title="Substituir por outra imagem mantendo legendas e ordem"
+                      >
+                        <RefreshCw className={`w-3 h-3 ${replacingIndex === index && uploading ? 'animate-spin text-[#e8342a]' : ''}`} />
+                        <span>{replacingIndex === index && uploading ? 'A substituir...' : 'Substituir Imagem'}</span>
+                      </button>
+                    </div>
                   </div>
 
                   {/* Campos de Edição da Mídia */}
@@ -448,13 +541,14 @@ export function ProjectMediaManager({
                   </div>
 
                   {/* Ações de Reordenação e Eliminação */}
-                  <div className="md:col-span-1 flex md:flex-col items-center justify-between md:justify-start gap-1">
+                  <div className="md:col-span-1 flex md:flex-col items-center justify-between md:justify-start gap-2 pt-2 md:pt-0 border-t md:border-t-0 border-[#f5f1ea]/10">
                     <button
                       type="button"
                       disabled={index === 0}
                       onClick={() => moveItem(index, 'up')}
                       title="Mover para cima"
-                      className="p-1.5 text-[#f5f1ea]/50 hover:text-white disabled:opacity-20 transition-colors"
+                      aria-label="Mover para cima"
+                      className="p-2 text-[#f5f1ea]/50 hover:text-white disabled:opacity-20 transition-colors"
                     >
                       <ArrowUp className="w-4 h-4" />
                     </button>
@@ -464,20 +558,48 @@ export function ProjectMediaManager({
                       disabled={index === media.length - 1}
                       onClick={() => moveItem(index, 'down')}
                       title="Mover para baixo"
-                      className="p-1.5 text-[#f5f1ea]/50 hover:text-white disabled:opacity-20 transition-colors"
+                      aria-label="Mover para baixo"
+                      className="p-2 text-[#f5f1ea]/50 hover:text-white disabled:opacity-20 transition-colors"
                     >
                       <ArrowDown className="w-4 h-4" />
                     </button>
 
                     <button
                       type="button"
-                      onClick={() => removeItem(index)}
-                      title="Remover imagem"
-                      className="p-1.5 text-red-400 hover:text-red-300 hover:bg-red-950/30 transition-colors md:mt-4"
+                      onClick={() => setConfirmDeleteIndex(index)}
+                      title="Remover imagem da galeria"
+                      aria-label="Remover imagem da galeria"
+                      className="p-2 text-red-400 hover:text-red-300 hover:bg-red-950/30 transition-colors md:mt-4"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
+
+                  {/* Diálogo Inline de Confirmação de Remoção da Galeria */}
+                  {confirmDeleteIndex === index && (
+                    <div className="md:col-span-12 p-3 bg-red-950/60 border border-red-500/40 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs animate-in fade-in duration-150">
+                      <div className="flex items-center gap-2 text-red-200">
+                        <AlertCircle className="w-4 h-4 flex-shrink-0 text-red-400" />
+                        <span>Deseja remover esta imagem da galeria deste projeto?</span>
+                      </div>
+                      <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                        <button
+                          type="button"
+                          onClick={() => confirmRemoveItem(index)}
+                          className="px-3 py-1.5 bg-red-600 text-white font-display text-[10px] uppercase tracking-wider hover:bg-red-500 transition-colors"
+                        >
+                          Sim, Remover
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setConfirmDeleteIndex(null)}
+                          className="px-3 py-1.5 border border-[#f5f1ea]/20 text-[#f5f1ea] font-display text-[10px] uppercase tracking-wider hover:bg-white hover:text-black transition-colors"
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}

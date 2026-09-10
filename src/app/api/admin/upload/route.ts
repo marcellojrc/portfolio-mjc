@@ -5,6 +5,7 @@ import path from 'path';
 import { slugify } from '@/lib/utils';
 import { rateLimit, getClientIp } from '@/lib/rate-limit';
 import { put } from '@vercel/blob';
+import { validateImageBuffer, MAX_IMAGE_SIZE_BYTES } from '@/lib/image-validation';
 
 export async function POST(request: Request) {
   const session = await getSession();
@@ -28,21 +29,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Nenhum ficheiro recebido no pedido.' }, { status: 400 });
     }
 
-    // 1. Validação de formato MIME estrito (Formatos seguros para arquitetura)
-    const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/avif'];
-    if (!allowedMimeTypes.includes(file.type)) {
-      return NextResponse.json(
-        {
-          error:
-            'Formato inválido. Apenas ficheiros de imagem (JPG, JPEG, PNG, WebP ou AVIF) são permitidos.',
-        },
-        { status: 400 }
-      );
+    if (file.size === 0) {
+      return NextResponse.json({ error: 'O ficheiro enviado está vazio (0 bytes).' }, { status: 400 });
     }
 
-    // 2. Limite de tamanho: 15MB
-    const maxSize = 15 * 1024 * 1024;
-    if (file.size > maxSize) {
+    if (file.size > MAX_IMAGE_SIZE_BYTES) {
       return NextResponse.json(
         { error: 'O ficheiro excede o tamanho máximo de 15MB.' },
         { status: 400 }
@@ -52,11 +43,20 @@ export async function POST(request: Request) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // 3. Sanitização de nome de ficheiro
+    // 1. Validação estrita de Magic Bytes (Assinatura binária real do ficheiro)
+    const validation = validateImageBuffer(buffer, file.type);
+    if (!validation.valid) {
+      return NextResponse.json(
+        { error: validation.error || 'Formato de imagem inválido.' },
+        { status: 400 }
+      );
+    }
+
+    // 2. Sanitização de nome de ficheiro e atribuição da extensão real validada
     const rawName = path.parse(file.name).name;
-    const cleanExt = path.parse(file.name).ext.toLowerCase() || '.jpg';
+    const safeExt = validation.extension || '.jpg';
     const timestamp = Date.now();
-    const safeFilename = `${slugify(rawName || 'upload')}-${timestamp}${cleanExt}`;
+    const safeFilename = `${slugify(rawName || 'upload')}-${timestamp}${safeExt}`;
 
     let publicUrl: string;
 

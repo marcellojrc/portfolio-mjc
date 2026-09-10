@@ -3,6 +3,8 @@ import { prisma } from '@/lib/db';
 import { getSession, requireRoles } from '@/lib/auth';
 import { projectSchema } from '@/schemas';
 
+import { safeDeleteAssetFromStorage } from '@/lib/storage';
+
 interface Props {
   params: Promise<{ id: string }>;
 }
@@ -26,6 +28,18 @@ export async function PUT(request: Request, { params }: Props) {
     }
 
     const { media, ...projectData } = parseResult.data;
+
+    // Coletar mídias e capa anteriores para verificação posterior de órfãos
+    const [previousMedia, currentProject] = await Promise.all([
+      prisma.projectMedia.findMany({
+        where: { projectId: id },
+        select: { url: true },
+      }),
+      prisma.project.findUnique({
+        where: { id },
+        select: { coverImage: true },
+      }),
+    ]);
 
     const updated = await prisma.$transaction(async (tx) => {
       const project = await tx.project.update({
@@ -55,6 +69,34 @@ export async function PUT(request: Request, { params }: Props) {
 
       return project;
     });
+
+    // Limpeza segura em segundo plano de assets antigos substituídos ou removidos
+    // Se a BD já foi atualizada com sucesso, tentamos desalocar assets físicos órfãos
+    try {
+      const newUrls = new Set<string>();
+      if (projectData.coverImage) newUrls.add(projectData.coverImage);
+      if (media) {
+        for (const m of media) newUrls.add(m.url);
+      }
+
+      const candidateUrls = new Set<string>();
+      if (currentProject?.coverImage && !newUrls.has(currentProject.coverImage)) {
+        candidateUrls.add(currentProject.coverImage);
+      }
+      for (const pm of previousMedia) {
+        if (!newUrls.has(pm.url)) {
+          candidateUrls.add(pm.url);
+        }
+      }
+
+      for (const url of candidateUrls) {
+        safeDeleteAssetFromStorage(url).catch((err) => {
+          console.warn('Aviso: Limpeza em segundo plano de asset substituído:', url, err);
+        });
+      }
+    } catch (cleanupErr) {
+      console.warn('Aviso: Erro ao calcular assets para limpeza:', cleanupErr);
+    }
 
     await prisma.activityLog.create({
       data: {
@@ -114,9 +156,35 @@ export async function DELETE(request: Request, { params }: Props) {
   const { id } = await params;
 
   try {
+    const projectToDelete = await prisma.project.findUnique({
+      where: { id },
+      include: { media: true },
+    });
+
+    if (!projectToDelete) {
+      return NextResponse.json({ error: 'Projeto não encontrado.' }, { status: 404 });
+    }
+
     const deleted = await prisma.project.delete({
       where: { id },
     });
+
+    // Limpeza de assets físicos em segundo plano caso não sejam referenciados por mais nada
+    try {
+      const urlsToCheck = new Set<string>();
+      if (projectToDelete.coverImage) urlsToCheck.add(projectToDelete.coverImage);
+      for (const m of projectToDelete.media) {
+        urlsToCheck.add(m.url);
+      }
+
+      for (const u of urlsToCheck) {
+        safeDeleteAssetFromStorage(u).catch((err) => {
+          console.warn('Aviso: Limpeza pós-deleção de projeto:', u, err);
+        });
+      }
+    } catch (cleanupErr) {
+      console.warn('Aviso: Erro ao calcular assets pós-deleção:', cleanupErr);
+    }
 
     await prisma.activityLog.create({
       data: {

@@ -139,8 +139,16 @@ export function ImageUploader({ value, onChange, label = 'Imagem de Capa' }: Ima
               onClick={() => fileInputRef.current?.click()}
               className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#e8342a] text-white font-display text-xs uppercase tracking-wider hover:bg-white hover:text-black transition-colors disabled:opacity-50"
             >
-              <Upload className="w-4 h-4" />
-              <span>Carregar do Computador</span>
+              {value ? <RefreshCw className="w-4 h-4" /> : <Upload className="w-4 h-4" />}
+              <span>
+                {uploading
+                  ? value
+                    ? 'A substituir imagem...'
+                    : 'A carregar ficheiro...'
+                  : value
+                    ? 'Substituir Imagem'
+                    : 'Carregar do Computador'}
+              </span>
             </button>
 
             {/* Botão para Escolher da Biblioteca */}
