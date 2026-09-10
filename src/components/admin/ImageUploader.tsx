@@ -3,6 +3,8 @@
 import { useState, useRef } from 'react';
 import Image from 'next/image';
 import { Upload, Image as ImageIcon, Check, X, Loader2, RefreshCw } from 'lucide-react';
+import { safeFetchJson } from '@/lib/api-client';
+import { validateFileBeforeUpload } from '@/lib/image-validation';
 
 interface ImageUploaderProps {
   value: string;
@@ -29,27 +31,39 @@ export function ImageUploader({ value, onChange, label = 'Imagem de Capa' }: Ima
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setUploading(true);
     setError(null);
+
+    // Validação preventiva no cliente antes de transmitir bytes pela rede
+    const clientValidation = validateFileBeforeUpload(file);
+    if (!clientValidation.valid) {
+      setError(clientValidation.error || 'Ficheiro inválido.');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    setUploading(true);
 
     const formData = new FormData();
     formData.append('file', file);
 
     try {
-      const res = await fetch('/api/admin/upload', {
+      const data = await safeFetchJson<{
+        success: boolean;
+        url: string;
+        error?: string;
+      }>('/api/admin/upload', {
         method: 'POST',
         body: formData,
       });
 
-      const data = await res.json();
-
-      if (res.ok && data.success) {
+      if (data.success && data.url) {
         onChange(data.url);
       } else {
         setError(data.error || 'Falha no upload do ficheiro.');
       }
-    } catch {
-      setError('Erro de ligação ao enviar o ficheiro.');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Erro ao enviar o ficheiro.';
+      setError(msg);
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -61,13 +75,20 @@ export function ImageUploader({ value, onChange, label = 'Imagem de Capa' }: Ima
     if (libraryMedia.length === 0) {
       setLoadingLibrary(true);
       try {
-        const res = await fetch('/api/admin/media');
-        const data = await res.json();
+        const data = await safeFetchJson<{
+          success: boolean;
+          media?: MediaOption[];
+          error?: string;
+        }>('/api/admin/media');
+
         if (data.success && data.media) {
           setLibraryMedia(data.media);
+        } else {
+          setError(data.error || 'Não foi possível carregar a biblioteca de mídia.');
         }
-      } catch {
-        setError('Não foi possível carregar a biblioteca de mídia.');
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : 'Não foi possível carregar a biblioteca de mídia.';
+        setError(msg);
       } finally {
         setLoadingLibrary(false);
       }

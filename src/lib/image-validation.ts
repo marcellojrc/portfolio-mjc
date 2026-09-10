@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Validador estrito de ficheiros de imagem via inspeção de Magic Bytes (assinaturas binárias).
  * Impede ficheiros forjados (ex.: executáveis ou scripts renomeados com extensão de imagem).
  */
@@ -10,7 +10,43 @@ export interface ImageValidationResult {
   error?: string;
 }
 
-export const MAX_IMAGE_SIZE_BYTES = 15 * 1024 * 1024; // 15 Megabytes
+export const MAX_IMAGE_SIZE_BYTES = 4.5 * 1024 * 1024; // 4.5 Megabytes (Limite de payload Vercel Serverless Functions)
+export const MAX_IMAGE_SIZE_LABEL = '4.5MB';
+
+/**
+ * Validação no cliente antes de enviar o pedido HTTP pela rede.
+ * Evita roundtrips e bloqueios de gateway (HTTP 413) no Vercel.
+ */
+export function validateFileBeforeUpload(file: File | null | undefined): {
+  valid: boolean;
+  error?: string;
+} {
+  if (!file) {
+    return { valid: false, error: 'Nenhum ficheiro selecionado.' };
+  }
+
+  if (file.size === 0) {
+    return { valid: false, error: 'O ficheiro selecionado está vazio (0 bytes).' };
+  }
+
+  if (file.size > MAX_IMAGE_SIZE_BYTES) {
+    const sizeMb = (file.size / 1024 / 1024).toFixed(2);
+    return {
+      valid: false,
+      error: `A imagem selecionada (${sizeMb}MB) excede o limite máximo de ${MAX_IMAGE_SIZE_LABEL} permitido para upload direto. Por favor comprima ou redimensione o ficheiro antes de carregar.`,
+    };
+  }
+
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/avif'];
+  if (file.type && !allowedTypes.includes(file.type)) {
+    return {
+      valid: false,
+      error: 'Formato de ficheiro não suportado. Por favor utilize JPG, PNG, WebP ou AVIF.',
+    };
+  }
+
+  return { valid: true };
+}
 
 /**
  * Inspeciona os primeiros bytes do buffer e determina o formato real da imagem.
@@ -29,7 +65,7 @@ export function validateImageBuffer(
   if (buffer.length > MAX_IMAGE_SIZE_BYTES) {
     return {
       valid: false,
-      error: `O ficheiro excede o tamanho máximo permitido de 15MB (${(buffer.length / 1024 / 1024).toFixed(2)}MB recebidos).`,
+      error: `O ficheiro excede o tamanho máximo permitido de ${MAX_IMAGE_SIZE_LABEL} (${(buffer.length / 1024 / 1024).toFixed(2)}MB recebidos).`,
     };
   }
 

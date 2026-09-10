@@ -5,7 +5,10 @@ import path from 'path';
 import { slugify } from '@/lib/utils';
 import { rateLimit, getClientIp } from '@/lib/rate-limit';
 import { put } from '@vercel/blob';
-import { validateImageBuffer, MAX_IMAGE_SIZE_BYTES } from '@/lib/image-validation';
+import { validateImageBuffer, MAX_IMAGE_SIZE_BYTES, MAX_IMAGE_SIZE_LABEL } from '@/lib/image-validation';
+
+export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
 
 export async function POST(request: Request) {
   const session = await getSession();
@@ -35,8 +38,8 @@ export async function POST(request: Request) {
 
     if (file.size > MAX_IMAGE_SIZE_BYTES) {
       return NextResponse.json(
-        { error: 'O ficheiro excede o tamanho máximo de 15MB.' },
-        { status: 400 }
+        { error: `O ficheiro excede o tamanho máximo de ${MAX_IMAGE_SIZE_LABEL} permitido para upload direto.` },
+        { status: 413 }
       );
     }
 

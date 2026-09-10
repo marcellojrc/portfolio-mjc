@@ -16,6 +16,8 @@ import {
   AlertCircle,
   RefreshCw,
 } from 'lucide-react';
+import { safeFetchJson } from '@/lib/api-client';
+import { validateFileBeforeUpload, MAX_IMAGE_SIZE_LABEL } from '@/lib/image-validation';
 
 export interface ProjectMediaItem {
   id?: string;
@@ -68,22 +70,34 @@ export function ProjectMediaManager({
 
   // Processar ficheiro enviado (Novo item)
   async function handleUploadFile(file: File) {
-    setUploading(true);
     setError(null);
+
+    // Validação preventiva no cliente antes de transmitir bytes pela rede
+    const clientValidation = validateFileBeforeUpload(file);
+    if (!clientValidation.valid) {
+      setError(clientValidation.error || 'Ficheiro inválido.');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      if (cameraInputRef.current) cameraInputRef.current.value = '';
+      return;
+    }
+
+    setUploading(true);
     setUploadProgress(`A carregar ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)...`);
 
     const formData = new FormData();
     formData.append('file', file);
 
     try {
-      const res = await fetch('/api/admin/upload', {
+      const data = await safeFetchJson<{
+        success: boolean;
+        url: string;
+        error?: string;
+      }>('/api/admin/upload', {
         method: 'POST',
         body: formData,
       });
 
-      const data = await res.json();
-
-      if (!res.ok || !data.success) {
+      if (!data.success || !data.url) {
         throw new Error(data.error || 'Falha ao processar upload.');
       }
 
@@ -121,22 +135,34 @@ export function ProjectMediaManager({
     if (indexToReplace < 0 || indexToReplace >= media.length) return;
     const oldItem = media[indexToReplace];
 
-    setUploading(true);
     setError(null);
+
+    // Validação preventiva no cliente antes de transmitir bytes pela rede
+    const clientValidation = validateFileBeforeUpload(file);
+    if (!clientValidation.valid) {
+      setError(clientValidation.error || 'Ficheiro inválido.');
+      if (replaceInputRef.current) replaceInputRef.current.value = '';
+      setReplacingIndex(null);
+      return;
+    }
+
+    setUploading(true);
     setUploadProgress(`A substituir imagem por ${file.name}...`);
 
     const formData = new FormData();
     formData.append('file', file);
 
     try {
-      const res = await fetch('/api/admin/upload', {
+      const data = await safeFetchJson<{
+        success: boolean;
+        url: string;
+        error?: string;
+      }>('/api/admin/upload', {
         method: 'POST',
         body: formData,
       });
 
-      const data = await res.json();
-
-      if (!res.ok || !data.success) {
+      if (!data.success || !data.url) {
         throw new Error(data.error || 'Falha ao processar substituição da imagem.');
       }
 
@@ -190,13 +216,21 @@ export function ProjectMediaManager({
     if (libraryMedia.length === 0) {
       setLoadingLibrary(true);
       try {
-        const res = await fetch('/api/admin/media');
-        const data = await res.json();
+        const data = await safeFetchJson<{
+          success: boolean;
+          media?: { id: string; url: string; alt: string }[];
+          error?: string;
+        }>('/api/admin/media');
+
         if (data.success && data.media) {
           setLibraryMedia(data.media);
+        } else {
+          setError(data.error || 'Não foi possível carregar a biblioteca de imagens.');
         }
-      } catch {
-        setError('Não foi possível carregar a biblioteca de imagens.');
+      } catch (err: unknown) {
+        const msg =
+          err instanceof Error ? err.message : 'Não foi possível carregar a biblioteca de imagens.';
+        setError(msg);
       } finally {
         setLoadingLibrary(false);
       }
@@ -297,7 +331,7 @@ export function ProjectMediaManager({
           </h4>
           <p className="text-xs text-[#f5f1ea]/60 max-w-md mx-auto">
             Arraste e largue uma imagem aqui, carregue do seu computador ou utilize a câmara do
-            telemóvel. Formatos: JPG, PNG, WebP ou AVIF (máx. 15MB).
+            telemóvel. Formatos: JPG, PNG, WebP ou AVIF (máx. {MAX_IMAGE_SIZE_LABEL}).
           </p>
         </div>
 

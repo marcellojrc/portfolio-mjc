@@ -9,6 +9,7 @@ import {
   ProjectMediaManager,
   type ProjectMediaItem,
 } from '@/components/admin/ProjectMediaManager';
+import { safeFetchJson } from '@/lib/api-client';
 
 export interface ProjectFormData {
   id?: string;
@@ -119,15 +120,17 @@ export function ProjectForm({ initialData, isEdit = false }: ProjectFormProps) {
     const method = isEdit ? 'PUT' : 'POST';
 
     try {
-      const res = await fetch(url, {
+      const data = await safeFetchJson<{
+        success: boolean;
+        project?: { id: string };
+        error?: string;
+      }>(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
 
-      const data = await res.json();
-
-      if (!res.ok || !data.success) {
+      if (!data.success) {
         throw new Error(data.error || 'Erro ao guardar o projeto.');
       }
 
@@ -139,8 +142,9 @@ export function ProjectForm({ initialData, isEdit = false }: ProjectFormProps) {
       });
 
       if (!isEdit && data.project?.id) {
+        const newProjectId = data.project.id;
         setTimeout(() => {
-          router.push(`/admin/projects/${data.project.id}/edit`);
+          router.push(`/admin/projects/${newProjectId}/edit`);
         }, 1200);
       } else {
         router.refresh();

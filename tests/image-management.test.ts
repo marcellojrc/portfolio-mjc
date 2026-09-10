@@ -1,4 +1,4 @@
-﻿import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import {
   validateImageBuffer,
   isProtectedSystemAsset,
@@ -62,7 +62,7 @@ describe('Sistema de Gestão de Imagens & Validação', () => {
       expect(result.error).toContain('vazio');
     });
 
-    it('rejeita ficheiro com tamanho superior ao limite de 15MB', () => {
+    it('rejeita ficheiro com tamanho superior ao limite de 4.5MB', () => {
       const oversizeBuffer = Buffer.alloc(MAX_IMAGE_SIZE_BYTES + 1024);
       // Preencher com assinatura JPEG para testar a precedência do limite de tamanho
       oversizeBuffer[0] = 0xff;
@@ -72,7 +72,7 @@ describe('Sistema de Gestão de Imagens & Validação', () => {
       const result = validateImageBuffer(oversizeBuffer);
 
       expect(result.valid).toBe(false);
-      expect(result.error).toContain('15MB');
+      expect(result.error).toContain('4.5MB');
     });
 
     it('rejeita ficheiro falso ou executável disfarçado de imagem', () => {

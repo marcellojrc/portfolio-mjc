@@ -4,6 +4,9 @@ import { getSession, requireRoles } from '@/lib/auth';
 import { safeDeleteAssetFromStorage, countActiveAssetReferences } from '@/lib/storage';
 import { isProtectedSystemAsset } from '@/lib/image-validation';
 
+export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
+
 export async function GET() {
   const session = await getSession();
   if (!session) {
