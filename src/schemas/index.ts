@@ -12,9 +12,30 @@ export const contactSchema = z.object({
   message: z.string().min(10, 'A mensagem deve ter pelo menos 10 caracteres.'),
 });
 
+function isValidMediaUrl(url: string): boolean {
+  if (!url) return false;
+  const clean = url.split('?')[0].toLowerCase();
+  if (
+    clean.endsWith('.svg') ||
+    clean.includes('.svg.') ||
+    clean.startsWith('data:image/svg+xml')
+  ) {
+    return false;
+  }
+  if (clean.endsWith('.gif') || clean.startsWith('data:image/gif')) {
+    return false;
+  }
+  return true;
+}
+
 export const projectMediaSchema = z.object({
   id: z.string().optional(),
-  url: z.string().min(1, 'O caminho/URL da imagem é obrigatório.'),
+  url: z
+    .string()
+    .min(1, 'O caminho/URL da imagem é obrigatório.')
+    .refine(isValidMediaUrl, {
+      message: 'Ficheiros SVG não são permitidos no CMS. Formatos aceites: JPG, PNG, WebP ou AVIF.',
+    }),
   type: z
     .enum(['IMAGE', 'PLAN', 'SECTION', 'ELEVATION', 'RENDER', 'PHOTO'])
     .default('IMAGE'),
@@ -38,7 +59,12 @@ export const projectSchema = z.object({
   services: z.string().optional().nullable(),
   concept: z.string().optional().nullable(),
   technicalDetails: z.string().optional().nullable(),
-  coverImage: z.string().min(1, 'A imagem de capa é obrigatória.'),
+  coverImage: z
+    .string()
+    .min(1, 'A imagem de capa é obrigatória.')
+    .refine(isValidMediaUrl, {
+      message: 'Ficheiros SVG não são permitidos como imagem de capa. Formatos aceites: JPG, PNG, WebP ou AVIF.',
+    }),
   featured: z.boolean().default(false),
   published: z.boolean().default(true),
   media: z.array(projectMediaSchema).optional(),
@@ -78,7 +104,12 @@ export const aboutProfileSchema = z.object({
   bioParagraph1: z.string().min(10, 'O primeiro parágrafo da biografia é obrigatório.'),
   bioParagraph2: z.string().optional().default(''),
   bioParagraph3: z.string().optional().default(''),
-  portraitUrl: z.string().min(1, 'A fotografia de perfil é obrigatória.'),
+  portraitUrl: z
+    .string()
+    .min(1, 'A fotografia de perfil é obrigatória.')
+    .refine(isValidMediaUrl, {
+      message: 'Ficheiros SVG não são permitidos como foto de perfil. Formatos aceites: JPG, PNG, WebP ou AVIF.',
+    }),
   workBase: z.string().min(2, 'A base de trabalho é obrigatória.'),
   focus: z.string().min(2, 'O foco profissional é obrigatório.'),
   cvUrl: z.string().optional().default(''),

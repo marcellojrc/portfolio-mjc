@@ -13,9 +13,24 @@ export interface ImageValidationResult {
 export const MAX_IMAGE_SIZE_BYTES = 50 * 1024 * 1024; // 50 Megabytes (Regra de negócio CMS para Direct Client Upload)
 export const MAX_IMAGE_SIZE_LABEL = '50MB';
 
+export const ALLOWED_IMAGE_MIME_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/avif',
+] as const;
+
+export const ALLOWED_IMAGE_EXTENSIONS = [
+  '.jpg',
+  '.jpeg',
+  '.png',
+  '.webp',
+  '.avif',
+] as const;
+
 /**
  * Validação no cliente antes de enviar o pedido HTTP pela rede.
- * Evita roundtrips e bloqueios de gateway (HTTP 413) no Vercel.
+ * Evita roundtrips e bloqueios de gateway no Vercel.
  */
 export function validateFileBeforeUpload(file: File | null | undefined): {
   valid: boolean;
@@ -37,19 +52,84 @@ export function validateFileBeforeUpload(file: File | null | undefined): {
     };
   }
 
-  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/avif'];
-  if (file.type && !allowedTypes.includes(file.type)) {
+  const lowerName = (file.name || '').toLowerCase();
+
+  // 1. Bloqueio explícito de SVG por extensão ou tipo MIME
+  if (
+    lowerName.endsWith('.svg') ||
+    lowerName.includes('.svg.') ||
+    file.type === 'image/svg+xml' ||
+    (file.type && file.type.toLowerCase().includes('svg'))
+  ) {
+    return {
+      valid: false,
+      error: 'Ficheiros SVG não são permitidos no CMS. Formatos aceites: JPG, PNG, WebP ou AVIF.',
+    };
+  }
+
+  // 2. Bloqueio de GIF (não utilizado no CMS de arquitetura)
+  if (lowerName.endsWith('.gif') || file.type === 'image/gif') {
+    return {
+      valid: false,
+      error: 'Formato GIF não é permitido. Por favor utilize JPG, PNG, WebP ou AVIF.',
+    };
+  }
+
+  // 3. Validação do MIME declarado
+  if (file.type && !ALLOWED_IMAGE_MIME_TYPES.includes(file.type as (typeof ALLOWED_IMAGE_MIME_TYPES)[number])) {
     return {
       valid: false,
       error: 'Formato de ficheiro não suportado. Por favor utilize JPG, PNG, WebP ou AVIF.',
     };
   }
 
+  // 4. Validação da extensão do nome
+  const dotIndex = lowerName.lastIndexOf('.');
+  if (dotIndex !== -1) {
+    const ext = lowerName.slice(dotIndex);
+    if (!ALLOWED_IMAGE_EXTENSIONS.includes(ext as (typeof ALLOWED_IMAGE_EXTENSIONS)[number])) {
+      return {
+        valid: false,
+        error: 'Extensão de ficheiro não suportada. Por favor utilize JPG, PNG, WebP ou AVIF.',
+      };
+    }
+  }
+
   return { valid: true };
 }
 
 /**
+ * Validação assíncrona que combina verificação de metadados e inspeção binária rápida (Magic Bytes).
+ * Deteta tentativas de forjar extensões (ex: SVG ou script renomeado para .jpg).
+ */
+export async function validateFileContentBeforeUpload(file: File | null | undefined): Promise<{
+  valid: boolean;
+  error?: string;
+}> {
+  const basic = validateFileBeforeUpload(file);
+  if (!basic.valid) return basic;
+
+  try {
+    const slice = await file!.slice(0, 128).arrayBuffer();
+    const bufferCheck = validateImageBuffer(new Uint8Array(slice), file!.type);
+    if (!bufferCheck.valid) {
+      return {
+        valid: false,
+        error: bufferCheck.error || 'Formato de ficheiro inválido.',
+      };
+    }
+    return { valid: true };
+  } catch {
+    return {
+      valid: false,
+      error: 'Não foi possível inspecionar o conteúdo do ficheiro.',
+    };
+  }
+}
+
+/**
  * Inspeciona os primeiros bytes do buffer e determina o formato real da imagem.
+ * Rejeita explicitamente SVG, ficheiros corrompidos ou não-imagem.
  */
 export function validateImageBuffer(
   buffer: Buffer | Uint8Array,
@@ -71,6 +151,21 @@ export function validateImageBuffer(
 
   const b = Buffer.isBuffer(buffer) ? buffer : Buffer.from(buffer);
 
+  // Verificação de assinaturas de texto/XML para rejeição imediata de SVG
+  const snippet = b.subarray(0, Math.min(b.length, 256)).toString('utf8').trim().toLowerCase();
+  if (
+    snippet.startsWith('<?xml') ||
+    snippet.startsWith('<svg') ||
+    snippet.includes('<svg') ||
+    snippet.includes('xmlns="http://www.w3.org/2000/svg"') ||
+    snippet.startsWith('<!doctype svg')
+  ) {
+    return {
+      valid: false,
+      error: 'Ficheiros SVG não são permitidos no CMS. Formatos aceites: JPG, PNG, WebP ou AVIF.',
+    };
+  }
+
   // 1. JPEG: FF D8 FF
   if (b.length >= 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) {
     return {
@@ -81,6 +176,23 @@ export function validateImageBuffer(
   }
 
   // 2. PNG: 89 50 4E 47 0D 0A 1A 0A
+  if (
+    b.length >= 8 &&
+    b[0] === 0x89 &&
+    b[1] === 0x4e &&
+    b[2] === 0x47 &&
+    b[3] === 0x0d &&
+    b[4] === 0x0a &&
+    b[5] === 0x1a &&
+    b[6] === 0x0a
+  ) {
+    return {
+      valid: true,
+      mimeType: 'image/png',
+      extension: '.png',
+    };
+  }
+  // Alternativa PNG de 8 bytes canónica (89 50 4E 47 0D 0A 1A 0A)
   if (
     b.length >= 8 &&
     b[0] === 0x89 &&
@@ -129,23 +241,6 @@ export function validateImageBuffer(
         extension: '.avif',
       };
     }
-  }
-
-  // 5. GIF: GIF87a ou GIF89a (se suportado)
-  if (
-    b.length >= 6 &&
-    b[0] === 0x47 && // G
-    b[1] === 0x49 && // I
-    b[2] === 0x46 && // F
-    b[3] === 0x38 && // 8
-    (b[4] === 0x37 || b[4] === 0x39) && // 7 ou 9
-    b[5] === 0x61 // a
-  ) {
-    return {
-      valid: true,
-      mimeType: 'image/gif',
-      extension: '.gif',
-    };
   }
 
   return {

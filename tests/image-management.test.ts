@@ -153,6 +153,37 @@ describe('Sistema de Gestão de Imagens & Validação', () => {
       expect(result.success).toBe(false);
     });
 
+    it('rejeita SVG em ProjectMediaItem', () => {
+      const svgItem = {
+        url: 'https://blob.vercel-storage.com/vetor.svg',
+        type: 'RENDER',
+        alt: 'Render SVG',
+      };
+      const result = projectMediaSchema.safeParse(svgItem);
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues[0].message).toContain('SVG');
+      }
+    });
+
+    it('rejeita SVG como coverImage de projeto', () => {
+      const projectWithSvgCover = {
+        title: 'Moradia Sommerschield',
+        slug: 'moradia-sommerschield',
+        number: '05',
+        category: 'Habitacional',
+        location: 'Maputo',
+        year: '2026',
+        description: 'Projeto residencial contemporâneo de alto padrão.',
+        coverImage: 'https://blob.vercel-storage.com/planta.svg',
+      };
+      const result = projectSchema.safeParse(projectWithSvgCover);
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues[0].message).toContain('SVG');
+      }
+    });
+
     it('garante que a substituição de imagem de capa preserva consistência', () => {
       // Simulação da regra de negócio: Se imagem antiga A era capa, B deve tornar-se a nova capa
       const oldCover = 'https://blob.vercel-storage.com/img-a.jpg';

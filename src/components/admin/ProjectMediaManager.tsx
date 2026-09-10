@@ -361,7 +361,7 @@ export function ProjectMediaManager({
         <input
           ref={cameraInputRef}
           type="file"
-          accept="image/*"
+          accept="image/jpeg,image/png,image/webp,image/avif"
           capture="environment"
           onChange={handleFileChange}
           className="hidden"

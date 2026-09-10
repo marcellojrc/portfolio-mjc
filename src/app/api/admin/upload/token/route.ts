@@ -2,7 +2,11 @@ import { handleUpload, type HandleUploadBody } from '@vercel/blob/client';
 import { NextResponse } from 'next/server';
 import { getSession, requireRoles } from '@/lib/auth';
 import { prisma } from '@/lib/db';
-import { MAX_IMAGE_SIZE_BYTES } from '@/lib/image-validation';
+import {
+  MAX_IMAGE_SIZE_BYTES,
+  ALLOWED_IMAGE_EXTENSIONS,
+  ALLOWED_IMAGE_MIME_TYPES,
+} from '@/lib/image-validation';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -61,6 +65,23 @@ export async function POST(request: Request): Promise<NextResponse> {
       body,
       request,
       onBeforeGenerateToken: async (pathname: string, clientPayload: string | null) => {
+        // Bloqueio explícito de SVG e extensões não autorizadas no token
+        const cleanPath = (pathname || '').toLowerCase();
+        const dotIndex = cleanPath.lastIndexOf('.');
+        const ext = dotIndex !== -1 ? cleanPath.slice(dotIndex) : '';
+
+        if (cleanPath.endsWith('.svg') || cleanPath.includes('.svg.') || ext === '.svg') {
+          throw new Error('Ficheiros SVG não são permitidos no CMS. Formatos aceites: JPG, PNG, WebP ou AVIF.');
+        }
+
+        if (cleanPath.endsWith('.gif') || ext === '.gif') {
+          throw new Error('Formato GIF não é permitido. Formatos aceites: JPG, PNG, WebP ou AVIF.');
+        }
+
+        if (!ALLOWED_IMAGE_EXTENSIONS.includes(ext as (typeof ALLOWED_IMAGE_EXTENSIONS)[number])) {
+          throw new Error('Extensão de ficheiro não permitida. Apenas JPG, PNG, WebP e AVIF são aceites.');
+        }
+
         let projectId: string | null = null;
 
         if (clientPayload) {
@@ -85,7 +106,7 @@ export async function POST(request: Request): Promise<NextResponse> {
         }
 
         return {
-          allowedContentTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/avif'],
+          allowedContentTypes: [...ALLOWED_IMAGE_MIME_TYPES],
           maximumSizeInBytes: MAX_IMAGE_SIZE_BYTES, // 50MB
           addRandomSuffix: true,
           tokenPayload: JSON.stringify({

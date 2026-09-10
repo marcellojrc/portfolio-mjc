@@ -141,7 +141,7 @@ export function ImageUploader({ value, onChange, label = 'Imagem de Capa' }: Ima
         {/* Botões de Ação */}
         <div className="sm:col-span-7 flex flex-col justify-center space-y-4">
           <p className="text-xs text-[#f5f1ea]/60 leading-relaxed">
-            Pode carregar uma nova imagem diretamente do seu computador (JPG, PNG, WebP) ou escolher
+            Pode carregar uma nova imagem diretamente do seu computador (JPG, PNG, WebP, AVIF) ou escolher
             uma fotografia ou desenho existente na biblioteca do projeto.
           </p>
 
@@ -197,12 +197,20 @@ export function ImageUploader({ value, onChange, label = 'Imagem de Capa' }: Ima
             type="text"
             required
             value={value}
-            onChange={(e) => onChange(e.target.value)}
+            onChange={(e) => {
+              const val = e.target.value;
+              if (val.toLowerCase().endsWith('.svg') || val.includes('.svg?')) {
+                setError('Ficheiros SVG não são permitidos no CMS. Formatos aceites: JPG, PNG, WebP ou AVIF.');
+              } else {
+                setError(null);
+              }
+              onChange(val);
+            }}
             placeholder="/images/proj01_01.jpg"
             className="w-full px-4 py-2.5 bg-[#0c0c0d] border border-[#f5f1ea]/15 text-xs text-[#f5f1ea] font-mono focus:outline-none focus:border-[#e8342a]"
           />
           <span className="text-[10px] text-[#f5f1ea]/40 font-mono">
-            Exemplo: /images/proj01_01.jpg ou /images/uploads/meu-render.jpg
+            Exemplo: /images/proj01_01.jpg ou /images/uploads/meu-render.jpg (Formatos: JPG, PNG, WebP, AVIF)
           </span>
         </div>
       )}

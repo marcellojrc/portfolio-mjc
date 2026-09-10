@@ -1,5 +1,9 @@
 import { upload } from '@vercel/blob/client';
-import { validateFileBeforeUpload } from './image-validation';
+import {
+  validateFileBeforeUpload,
+  validateFileContentBeforeUpload,
+  ALLOWED_IMAGE_EXTENSIONS,
+} from './image-validation';
 import { slugify } from './utils';
 
 /**
@@ -147,7 +151,7 @@ export async function uploadAssetDirectly(
   options?: DirectUploadOptions
 ): Promise<DirectUploadResult> {
   // 1. Validação prévia de arquivo no cliente (tamanho até 50MB, MIME real, ficheiro não vazio)
-  const validation = validateFileBeforeUpload(file);
+  const validation = await validateFileContentBeforeUpload(file);
   if (!validation.valid) {
     throw new Error(validation.error || 'Ficheiro inválido.');
   }
@@ -157,6 +161,11 @@ export async function uploadAssetDirectly(
   const cleanBase = slugify(rawName || 'upload');
   const dotIndex = file.name.lastIndexOf('.');
   const ext = dotIndex !== -1 ? file.name.slice(dotIndex).toLowerCase() : '.jpg';
+
+  if (!ALLOWED_IMAGE_EXTENSIONS.includes(ext as (typeof ALLOWED_IMAGE_EXTENSIONS)[number])) {
+    throw new Error('Extensão de ficheiro não permitida. Apenas JPG, PNG, WebP e AVIF são aceites.');
+  }
+
   const pathname = `projects/${cleanBase}${ext}`;
 
   try {
