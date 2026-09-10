@@ -151,4 +151,64 @@ describe('Zod Validation Schemas', () => {
     };
     expect(aboutProfileSchema.safeParse(validProfile).success).toBe(true);
   });
+
+  describe('Auditoria de Validação de URLs de Mídia (isValidMediaUrl)', () => {
+    it('aceita URL válida do Vercel Blob com extensões autorizadas (JPG, PNG, WebP, AVIF)', () => {
+      const validBlobJpg = 'https://abc123xyz.public.blob.vercel-storage.com/projects/render-01.jpg';
+      const validBlobWebp = 'https://blob.vercel-storage.com/projects/corte-02.webp';
+      const validBlobAvif = 'https://blob.vercel-storage.com/projects/detalhe-03.avif';
+      const validBlobPng = 'https://blob.vercel-storage.com/projects/planta-04.png';
+
+      expect(projectMediaSchema.safeParse({ url: validBlobJpg, type: 'RENDER' }).success).toBe(true);
+      expect(projectMediaSchema.safeParse({ url: validBlobWebp, type: 'SECTION' }).success).toBe(true);
+      expect(projectMediaSchema.safeParse({ url: validBlobAvif, type: 'PHOTO' }).success).toBe(true);
+      expect(projectMediaSchema.safeParse({ url: validBlobPng, type: 'PLAN' }).success).toBe(true);
+    });
+
+    it('aceita caminhos locais estáticos /images/...', () => {
+      expect(projectMediaSchema.safeParse({ url: '/images/proj01_01.jpg', type: 'RENDER' }).success).toBe(true);
+      expect(projectMediaSchema.safeParse({ url: '/images/uploads/obra-123.webp', type: 'PHOTO' }).success).toBe(true);
+    });
+
+    it('rejeita URL de SVG (.svg)', () => {
+      const svgUrl = 'https://blob.vercel-storage.com/vetor.svg';
+      expect(projectMediaSchema.safeParse({ url: svgUrl, type: 'RENDER' }).success).toBe(false);
+    });
+
+    it('rejeita URL de GIF (.gif)', () => {
+      const gifUrl = 'https://blob.vercel-storage.com/animacao.gif';
+      expect(projectMediaSchema.safeParse({ url: gifUrl, type: 'RENDER' }).success).toBe(false);
+    });
+
+    it('rejeita data: URI (data:image/svg+xml)', () => {
+      const dataUri = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjwvc3ZnPg==';
+      expect(projectMediaSchema.safeParse({ url: dataUri, type: 'RENDER' }).success).toBe(false);
+    });
+
+    it('rejeita documento PDF (.pdf)', () => {
+      const pdfUrl = 'https://blob.vercel-storage.com/especificacoes.pdf';
+      expect(projectMediaSchema.safeParse({ url: pdfUrl, type: 'RENDER' }).success).toBe(false);
+    });
+
+    it('rejeita executável EXE (.exe)', () => {
+      const exeUrl = 'https://blob.vercel-storage.com/instalador.exe';
+      expect(projectMediaSchema.safeParse({ url: exeUrl, type: 'RENDER' }).success).toBe(false);
+    });
+
+    it('rejeita URL vazia ou apenas com espaços', () => {
+      expect(projectMediaSchema.safeParse({ url: '', type: 'RENDER' }).success).toBe(false);
+      expect(projectMediaSchema.safeParse({ url: '   ', type: 'RENDER' }).success).toBe(false);
+    });
+
+    it('rejeita URL inválida ou esquema malicioso (javascript:)', () => {
+      expect(projectMediaSchema.safeParse({ url: 'javascript:alert(1)', type: 'RENDER' }).success).toBe(false);
+      expect(projectMediaSchema.safeParse({ url: 'http://', type: 'RENDER' }).success).toBe(false);
+      expect(projectMediaSchema.safeParse({ url: 'not-a-valid-url', type: 'RENDER' }).success).toBe(false);
+    });
+
+    it('rejeita URL externa arbitrária fora do Vercel Blob (evita quebra do next/image)', () => {
+      const externalUrl = 'https://random-unauthorized-domain.com/imagem.jpg';
+      expect(projectMediaSchema.safeParse({ url: externalUrl, type: 'RENDER' }).success).toBe(false);
+    });
+  });
 });

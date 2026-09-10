@@ -12,20 +12,54 @@ export const contactSchema = z.object({
   message: z.string().min(10, 'A mensagem deve ter pelo menos 10 caracteres.'),
 });
 
-function isValidMediaUrl(url: string): boolean {
-  if (!url) return false;
-  const clean = url.split('?')[0].toLowerCase();
+export function isValidMediaUrl(url: string | null | undefined): boolean {
+  if (!url || typeof url !== 'string') return false;
+  const trimmed = url.trim();
+  if (!trimmed) return false;
+
+  const lower = trimmed.toLowerCase();
+  // 1. Rejeição de esquemas perigosos e data URIs
   if (
-    clean.endsWith('.svg') ||
-    clean.includes('.svg.') ||
-    clean.startsWith('data:image/svg+xml')
+    lower.startsWith('javascript:') ||
+    lower.startsWith('data:') ||
+    lower.startsWith('vbscript:') ||
+    lower.includes('<') ||
+    lower.includes('>')
   ) {
     return false;
   }
-  if (clean.endsWith('.gif') || clean.startsWith('data:image/gif')) {
+
+  // 2. Extração de extensão do arquivo
+  const cleanPath = lower.split(/[?#]/)[0];
+  const dotIndex = cleanPath.lastIndexOf('.');
+  if (dotIndex === -1) return false;
+  const ext = cleanPath.slice(dotIndex);
+
+  // 3. Validação estrita de extensão (Apenas JPG, PNG, WebP, AVIF — rejeita SVG, GIF, PDF, EXE)
+  const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.avif'];
+  if (!allowedExtensions.includes(ext)) {
     return false;
   }
-  return true;
+
+  // 4. Validação da origem do asset (Conformidade arquitetural e next.config.ts)
+  // 4.1. Caminhos locais de projeto (public/images/...)
+  if (trimmed.startsWith('/images/')) {
+    return true;
+  }
+
+  // 4.2. Vercel Blob Storage oficial (HTTPS com hostname vercel-storage.com)
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.protocol !== 'https:') return false;
+    const host = parsed.hostname.toLowerCase();
+    if (host === 'blob.vercel-storage.com' || host.endsWith('.blob.vercel-storage.com')) {
+      return true;
+    }
+  } catch {
+    return false;
+  }
+
+  return false;
 }
 
 export const projectMediaSchema = z.object({
