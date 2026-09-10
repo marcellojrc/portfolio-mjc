@@ -1,4 +1,4 @@
-import { upload } from '@vercel/blob/client';
+import { uploadPresigned, upload } from '@vercel/blob/client';
 import {
   validateFileBeforeUpload,
   validateFileContentBeforeUpload,
@@ -169,8 +169,8 @@ export async function uploadAssetDirectly(
   const pathname = `projects/${cleanBase}${ext}`;
 
   try {
-    // 2. Direct Client Upload para o Vercel Blob com suporte a multipart
-    const blob = await upload(pathname, file, {
+    // 2. Direct Client Upload para o Vercel Blob via URLs pré-assinadas (Presigned URLs / OIDC)
+    const blob = await uploadPresigned(pathname, file, {
       access: 'public',
       handleUploadUrl: '/api/admin/upload/token',
       clientPayload: JSON.stringify({ projectId: options?.projectId || null }),
@@ -189,11 +189,43 @@ export async function uploadAssetDirectly(
       contentType: blob.contentType || file.type,
     };
   } catch (err: unknown) {
-    const errorMsg = err instanceof Error ? err.message : String(err);
+    let errorMsg = err instanceof Error ? err.message : String(err);
+
+    // Se o erro for genérico do SDK ("Failed to retrieve the presigned URL" / "client token"),
+    // fazemos probe à rota de token para obter a mensagem exata devolvida pelo servidor
+    if (errorMsg.includes('Failed to retrieve') || errorMsg.includes('BlobError')) {
+      try {
+        const probeRes = await fetch('/api/admin/upload/token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'blob.generate-presigned-url',
+            payload: {
+              pathname,
+              clientPayload: JSON.stringify({ projectId: options?.projectId || null }),
+              multipart: true,
+            },
+          }),
+        });
+        const probeData = (await probeRes.json().catch(() => null)) as {
+          error?: string;
+          message?: string;
+        } | null;
+        if (probeData?.error || probeData?.message) {
+          errorMsg = probeData.error || probeData.message || errorMsg;
+        }
+      } catch {
+        // mantém o errorMsg original se o probe falhar
+      }
+    }
 
     // Se for erro de permissões ou autorização, propagar sem tentar fallback
-    if (errorMsg.includes('Não autenticado') || errorMsg.includes('Acesso negado')) {
-      throw err;
+    if (
+      errorMsg.includes('Não autenticado') ||
+      errorMsg.includes('Acesso negado') ||
+      errorMsg.includes('permissões de administrador')
+    ) {
+      throw new Error(errorMsg);
     }
 
     // Regra 5: Fallback para disco local APENAS em desenvolvimento local se o Vercel Blob não estiver configurado
@@ -201,7 +233,13 @@ export async function uploadAssetDirectly(
       typeof window !== 'undefined' &&
       (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
 
-    if (isLocalDev && errorMsg.includes('BLOB_NOT_CONFIGURED_LOCAL')) {
+    if (
+      isLocalDev &&
+      (errorMsg.includes('BLOB_NOT_CONFIGURED_LOCAL') ||
+        errorMsg.includes('development') ||
+        errorMsg.includes('Failed to retrieve') ||
+        errorMsg.includes('Blob credentials'))
+    ) {
       console.warn('Vercel Blob ausente em ambiente local. A utilizar armazenamento em disco local.');
       const formData = new FormData();
       formData.append('file', file);
