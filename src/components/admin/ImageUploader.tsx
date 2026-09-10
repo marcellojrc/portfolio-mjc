@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react';
 import Image from 'next/image';
 import { Upload, Image as ImageIcon, Check, X, Loader2, RefreshCw } from 'lucide-react';
-import { safeFetchJson } from '@/lib/api-client';
+import { uploadAssetDirectly, safeFetchJson } from '@/lib/api-client';
 import { validateFileBeforeUpload } from '@/lib/image-validation';
 
 interface ImageUploaderProps {
@@ -21,6 +21,7 @@ interface MediaOption {
 export function ImageUploader({ value, onChange, label = 'Imagem de Capa' }: ImageUploaderProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgressPercentage, setUploadProgressPercentage] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
   const [libraryMedia, setLibraryMedia] = useState<MediaOption[]>([]);
@@ -42,30 +43,26 @@ export function ImageUploader({ value, onChange, label = 'Imagem de Capa' }: Ima
     }
 
     setUploading(true);
-
-    const formData = new FormData();
-    formData.append('file', file);
+    setUploadProgressPercentage(0);
 
     try {
-      const data = await safeFetchJson<{
-        success: boolean;
-        url: string;
-        error?: string;
-      }>('/api/admin/upload', {
-        method: 'POST',
-        body: formData,
+      const result = await uploadAssetDirectly(file, {
+        onProgress: (pct) => {
+          setUploadProgressPercentage(pct);
+        },
       });
 
-      if (data.success && data.url) {
-        onChange(data.url);
+      if (result.url) {
+        onChange(result.url);
       } else {
-        setError(data.error || 'Falha no upload do ficheiro.');
+        setError('Falha no upload do ficheiro.');
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Erro ao enviar o ficheiro.';
       setError(msg);
     } finally {
       setUploading(false);
+      setUploadProgressPercentage(null);
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
   }
@@ -132,7 +129,11 @@ export function ImageUploader({ value, onChange, label = 'Imagem de Capa' }: Ima
           {uploading && (
             <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center gap-2 text-xs text-[#f5f1ea]">
               <Loader2 className="w-6 h-6 animate-spin text-[#e8342a]" />
-              <span>A carregar ficheiro...</span>
+              <span>
+                {uploadProgressPercentage !== null
+                  ? `A carregar: ${uploadProgressPercentage}%`
+                  : 'A carregar ficheiro...'}
+              </span>
             </div>
           )}
         </div>

@@ -10,8 +10,8 @@ export interface ImageValidationResult {
   error?: string;
 }
 
-export const MAX_IMAGE_SIZE_BYTES = 4.5 * 1024 * 1024; // 4.5 Megabytes (Limite de payload Vercel Serverless Functions)
-export const MAX_IMAGE_SIZE_LABEL = '4.5MB';
+export const MAX_IMAGE_SIZE_BYTES = 50 * 1024 * 1024; // 50 Megabytes (Regra de negócio CMS para Direct Client Upload)
+export const MAX_IMAGE_SIZE_LABEL = '50MB';
 
 /**
  * Validação no cliente antes de enviar o pedido HTTP pela rede.

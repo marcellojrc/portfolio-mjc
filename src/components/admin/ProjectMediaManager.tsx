@@ -16,7 +16,7 @@ import {
   AlertCircle,
   RefreshCw,
 } from 'lucide-react';
-import { safeFetchJson } from '@/lib/api-client';
+import { uploadAssetDirectly, safeFetchJson } from '@/lib/api-client';
 import { validateFileBeforeUpload, MAX_IMAGE_SIZE_LABEL } from '@/lib/image-validation';
 
 export interface ProjectMediaItem {
@@ -31,6 +31,7 @@ export interface ProjectMediaItem {
 interface ProjectMediaManagerProps {
   media: ProjectMediaItem[];
   coverImage: string;
+  projectId?: string;
   onCoverImageChange: (url: string) => void;
   onMediaChange: (media: ProjectMediaItem[]) => void;
 }
@@ -47,6 +48,7 @@ const MEDIA_TYPES = [
 export function ProjectMediaManager({
   media,
   coverImage,
+  projectId,
   onCoverImageChange,
   onMediaChange,
 }: ProjectMediaManagerProps) {
@@ -55,7 +57,13 @@ export function ProjectMediaManager({
 
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<string | null>(null);
+  const [uploadProgressPercentage, setUploadProgressPercentage] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [lastFailedFile, setLastFailedFile] = useState<{
+    file: File;
+    action: 'upload' | 'replace';
+    index?: number;
+  } | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
 
   // Biblioteca Modal
@@ -68,9 +76,10 @@ export function ProjectMediaManager({
   const [confirmDeleteIndex, setConfirmDeleteIndex] = useState<number | null>(null);
   const replaceInputRef = useRef<HTMLInputElement>(null);
 
-  // Processar ficheiro enviado (Novo item)
+  // Processar ficheiro enviado (Novo item via Direct Client Upload)
   async function handleUploadFile(file: File) {
     setError(null);
+    setLastFailedFile(null);
 
     // Validação preventiva no cliente antes de transmitir bytes pela rede
     const clientValidation = validateFileBeforeUpload(file);
@@ -82,28 +91,21 @@ export function ProjectMediaManager({
     }
 
     setUploading(true);
-    setUploadProgress(`A carregar ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)...`);
-
-    const formData = new FormData();
-    formData.append('file', file);
+    setUploadProgressPercentage(0);
+    setUploadProgress(`A preparar envio de ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)...`);
 
     try {
-      const data = await safeFetchJson<{
-        success: boolean;
-        url: string;
-        error?: string;
-      }>('/api/admin/upload', {
-        method: 'POST',
-        body: formData,
+      const result = await uploadAssetDirectly(file, {
+        projectId,
+        onProgress: (pct) => {
+          setUploadProgressPercentage(pct);
+          setUploadProgress(`A carregar para Vercel Blob: ${pct}%`);
+        },
       });
 
-      if (!data.success || !data.url) {
-        throw new Error(data.error || 'Falha ao processar upload.');
-      }
-
-      // Adicionar nova imagem à lista de mídias
+      // Adicionar nova imagem à lista de mídias com o URL definitivo do Blob
       const newItem: ProjectMediaItem = {
-        url: data.url,
+        url: result.url,
         type: 'RENDER',
         alt: file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' '),
         caption: '',
@@ -115,14 +117,18 @@ export function ProjectMediaManager({
 
       // Se não houver capa ainda, definir como capa
       if (!coverImage || coverImage === '') {
-        onCoverImageChange(data.url);
+        onCoverImageChange(result.url);
       }
 
-      setUploadProgress('Imagem adicionada com sucesso!');
-      setTimeout(() => setUploadProgress(null), 3000);
+      setUploadProgress('Imagem carregada com sucesso via Direct Client Upload!');
+      setTimeout(() => {
+        setUploadProgress(null);
+        setUploadProgressPercentage(null);
+      }, 3000);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Erro ao carregar ficheiro.';
       setError(msg);
+      setLastFailedFile({ file, action: 'upload' });
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -136,6 +142,7 @@ export function ProjectMediaManager({
     const oldItem = media[indexToReplace];
 
     setError(null);
+    setLastFailedFile(null);
 
     // Validação preventiva no cliente antes de transmitir bytes pela rede
     const clientValidation = validateFileBeforeUpload(file);
@@ -147,47 +154,54 @@ export function ProjectMediaManager({
     }
 
     setUploading(true);
+    setUploadProgressPercentage(0);
     setUploadProgress(`A substituir imagem por ${file.name}...`);
 
-    const formData = new FormData();
-    formData.append('file', file);
-
     try {
-      const data = await safeFetchJson<{
-        success: boolean;
-        url: string;
-        error?: string;
-      }>('/api/admin/upload', {
-        method: 'POST',
-        body: formData,
+      const result = await uploadAssetDirectly(file, {
+        projectId,
+        onProgress: (pct) => {
+          setUploadProgressPercentage(pct);
+          setUploadProgress(`A carregar nova imagem: ${pct}%`);
+        },
       });
 
-      if (!data.success || !data.url) {
-        throw new Error(data.error || 'Falha ao processar substituição da imagem.');
-      }
-
-      // 1. Atualizar o item da galeria com o novo URL, preservando metadados (tipo, legenda, alt, ordem)
+      // 1. Atualizar o item da galeria com o novo URL do Blob, preservando metadados (tipo, legenda, alt, ordem)
       const updated = [...media];
       updated[indexToReplace] = {
         ...oldItem,
-        url: data.url,
+        url: result.url,
       };
       onMediaChange(updated);
 
       // 2. Se a imagem antiga era a capa do projeto, atualizar a capa atomicamente para o novo URL
       if (coverImage === oldItem.url) {
-        onCoverImageChange(data.url);
+        onCoverImageChange(result.url);
       }
 
-      setUploadProgress('Imagem substituída com sucesso!');
-      setTimeout(() => setUploadProgress(null), 3000);
+      setUploadProgress('Imagem substituída com sucesso via Direct Client Upload!');
+      setTimeout(() => {
+        setUploadProgress(null);
+        setUploadProgressPercentage(null);
+      }, 3000);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Erro ao substituir imagem.';
       setError(msg);
+      setLastFailedFile({ file, action: 'replace', index: indexToReplace });
     } finally {
       setUploading(false);
       setReplacingIndex(null);
       if (replaceInputRef.current) replaceInputRef.current.value = '';
+    }
+  }
+
+  function retryLastUpload() {
+    if (!lastFailedFile) return;
+    const { file, action, index } = lastFailedFile;
+    if (action === 'upload') {
+      handleUploadFile(file);
+    } else if (action === 'replace' && index !== undefined) {
+      handleReplaceFile(file, index);
     }
   }
 
@@ -395,25 +409,52 @@ export function ProjectMediaManager({
           </button>
         </div>
 
-        {/* Estado de Upload & Feedback */}
+        {/* Estado de Upload com Barra de Progresso em Tempo Real */}
         {uploading && (
-          <div className="pt-2 flex items-center justify-center gap-2 text-xs text-[#e8342a] font-mono">
-            <Loader2 className="w-4 h-4 animate-spin" />
-            <span>{uploadProgress || 'A processar upload do ficheiro...'}</span>
+          <div className="pt-2 max-w-md mx-auto space-y-2">
+            <div className="flex items-center justify-between text-xs text-[#e8342a] font-mono">
+              <span className="flex items-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>{uploadProgress || 'A processar upload direto...'}</span>
+              </span>
+              {uploadProgressPercentage !== null && (
+                <span className="font-bold">{uploadProgressPercentage}%</span>
+              )}
+            </div>
+            {uploadProgressPercentage !== null && (
+              <div className="w-full bg-[#f5f1ea]/10 h-1.5 overflow-hidden">
+                <div
+                  className="bg-[#e8342a] h-full transition-all duration-150"
+                  style={{ width: `${uploadProgressPercentage}%` }}
+                />
+              </div>
+            )}
           </div>
         )}
 
         {uploadProgress && !uploading && (
-          <div className="pt-2 flex items-center justify-center gap-2 text-xs text-emerald-400 font-medium">
+          <div className="pt-2 flex items-center justify-center gap-2 text-xs text-emerald-400 font-medium animate-in fade-in">
             <CheckCircle2 className="w-4 h-4" />
             <span>{uploadProgress}</span>
           </div>
         )}
 
         {error && (
-          <div className="pt-2 flex items-center justify-center gap-2 text-xs text-red-400 font-medium">
-            <AlertCircle className="w-4 h-4" />
-            <span>{error}</span>
+          <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-2 text-xs text-red-400 font-medium animate-in fade-in">
+            <div className="flex items-center gap-1.5 text-center">
+              <AlertCircle className="w-4 h-4 flex-shrink-0 text-red-500" />
+              <span>{error}</span>
+            </div>
+            {lastFailedFile && (
+              <button
+                type="button"
+                onClick={retryLastUpload}
+                className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-950/80 border border-red-500/50 text-red-200 hover:text-white hover:bg-red-900 text-[11px] font-display uppercase tracking-wider transition-colors mt-1 sm:mt-0"
+              >
+                <RefreshCw className="w-3 h-3" />
+                <span>Tentar Novamente</span>
+              </button>
+            )}
           </div>
         )}
       </div>

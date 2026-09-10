@@ -1,3 +1,7 @@
+import { upload } from '@vercel/blob/client';
+import { validateFileBeforeUpload } from './image-validation';
+import { slugify } from './utils';
+
 /**
  * Utilitário seguro para efetuar pedidos e parsing de respostas da API no CMS.
  * Garante que NUNCA é chamado `response.json()` de forma cega em respostas de texto simples ou HTML,
@@ -46,7 +50,7 @@ export async function parseApiResponse<T = any>(res: Response): Promise<T> {
       lowerText.includes('function_payload_too_large')
     ) {
       throw new Error(
-        'A imagem excede o tamanho máximo permitido pelo servidor (máx. 4.5MB). Por favor redimensione ou comprima o ficheiro antes de carregar.'
+        'A imagem excede o tamanho máximo permitido pelo servidor (máx. 50MB). Por favor redimensione ou comprima o ficheiro antes de carregar.'
       );
     }
 
@@ -115,4 +119,111 @@ export async function safeFetchJson<T = any>(
 ): Promise<T> {
   const res = await fetch(input, init);
   return parseApiResponse<T>(res);
+}
+
+export interface DirectUploadOptions {
+  projectId?: string;
+  onProgress?: (percentage: number) => void;
+}
+
+export interface DirectUploadResult {
+  url: string;
+  pathname: string;
+  size: number;
+  contentType: string;
+}
+
+/**
+ * Executa o Direct Client Upload para o Vercel Blob.
+ *
+ * 1. O ficheiro binário é transmitido DIRECTAMENTE do navegador para o Vercel Blob
+ *    (sem passar pelo limite de 4.5MB da Serverless Function).
+ * 2. Em produção: o Direct Client Upload é obrigatório. Se falhar, emite erro claro.
+ * 3. Em desenvolvimento local offline: caso o Vercel Blob não esteja configurado,
+ *    utiliza fallback para o disco local de modo a permitir desenvolvimento sem credenciais de nuvem.
+ */
+export async function uploadAssetDirectly(
+  file: File,
+  options?: DirectUploadOptions
+): Promise<DirectUploadResult> {
+  // 1. Validação prévia de arquivo no cliente (tamanho até 50MB, MIME real, ficheiro não vazio)
+  const validation = validateFileBeforeUpload(file);
+  if (!validation.valid) {
+    throw new Error(validation.error || 'Ficheiro inválido.');
+  }
+
+  // Sanitizar o nome base para o pathname
+  const rawName = file.name.replace(/\.[^/.]+$/, '');
+  const cleanBase = slugify(rawName || 'upload');
+  const dotIndex = file.name.lastIndexOf('.');
+  const ext = dotIndex !== -1 ? file.name.slice(dotIndex).toLowerCase() : '.jpg';
+  const pathname = `projects/${cleanBase}${ext}`;
+
+  try {
+    // 2. Direct Client Upload para o Vercel Blob com suporte a multipart
+    const blob = await upload(pathname, file, {
+      access: 'public',
+      handleUploadUrl: '/api/admin/upload/token',
+      clientPayload: JSON.stringify({ projectId: options?.projectId || null }),
+      multipart: true,
+      onUploadProgress: ({ percentage }) => {
+        if (options?.onProgress) {
+          options.onProgress(Math.round(percentage));
+        }
+      },
+    });
+
+    return {
+      url: blob.url,
+      pathname: blob.pathname,
+      size: file.size,
+      contentType: blob.contentType || file.type,
+    };
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : String(err);
+
+    // Se for erro de permissões ou autorização, propagar sem tentar fallback
+    if (errorMsg.includes('Não autenticado') || errorMsg.includes('Acesso negado')) {
+      throw err;
+    }
+
+    // Regra 5: Fallback para disco local APENAS em desenvolvimento local se o Vercel Blob não estiver configurado
+    const isLocalDev =
+      typeof window !== 'undefined' &&
+      (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
+    if (isLocalDev && errorMsg.includes('BLOB_NOT_CONFIGURED_LOCAL')) {
+      console.warn('Vercel Blob ausente em ambiente local. A utilizar armazenamento em disco local.');
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const localData = await safeFetchJson<{
+        success: boolean;
+        url: string;
+        filename?: string;
+        error?: string;
+      }>('/api/admin/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!localData.success || !localData.url) {
+        throw new Error(localData.error || 'Falha no upload local.');
+      }
+
+      if (options?.onProgress) {
+        options.onProgress(100);
+      }
+
+      return {
+        url: localData.url,
+        pathname: localData.filename || file.name,
+        size: file.size,
+        contentType: file.type,
+      };
+    }
+
+    // Regra 4: Em produção, Direct Client Upload é estritamente obrigatório
+    throw new Error(`Falha no upload direto para o Vercel Blob: ${errorMsg}`);
+  }
 }

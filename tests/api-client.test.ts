@@ -13,10 +13,10 @@ describe('Robust API Client & Response Parsing (Bug Fix Validation)', () => {
 
       const result = validateFileBeforeUpload(mockFile);
       expect(result.valid).toBe(false);
-      expect(result.error).toContain('4.5MB');
+      expect(result.error).toContain('50MB');
     });
 
-    it('aceita ficheiros dentro do limite de 4.5MB com formato permitido', () => {
+    it('aceita ficheiros dentro do limite de 50MB com formato permitido', () => {
       const mockFile = {
         name: 'render_valido.webp',
         size: 2 * 1024 * 1024, // 2MB
@@ -76,7 +76,7 @@ describe('Robust API Client & Response Parsing (Bug Fix Validation)', () => {
       });
 
       await expect(parseApiResponse(mockResponse)).rejects.toThrow(
-        'A imagem excede o tamanho máximo permitido pelo servidor (máx. 4.5MB)'
+        'A imagem excede o tamanho máximo permitido pelo servidor (máx. 50MB)'
       );
     });
 

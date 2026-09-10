@@ -392,6 +392,7 @@ export function ProjectForm({ initialData, isEdit = false }: ProjectFormProps) {
         <ProjectMediaManager
           media={mediaItems}
           coverImage={formData.coverImage}
+          projectId={formData.id}
           onCoverImageChange={(url) => setFormData((prev) => ({ ...prev, coverImage: url }))}
           onMediaChange={(newMedia) => setMediaItems(newMedia)}
         />
